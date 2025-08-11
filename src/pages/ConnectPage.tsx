@@ -15,6 +15,7 @@ export default function ConnectPage() {
     const walletName = useWalletName();
 
     const token = searchParams.get('token') || '';
+    const refCode = searchParams.get('ref');
 
     // Auto-authenticate if wallet is already connected
     useEffect(() => {
@@ -32,7 +33,7 @@ export default function ConnectPage() {
                 throw new Error('Wallet not connected. Please connect your wallet first.');
             }
 
-            const authData = await authenticateWallet();
+            const authData = await authenticateWallet(refCode);
 
             if (!authData) {
                 throw new Error('Failed to authenticate wallet');

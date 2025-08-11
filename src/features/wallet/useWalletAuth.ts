@@ -17,15 +17,22 @@ export interface BackendPayload {
 export function useWalletAuth() {
     const { publicKey, signMessage, connected } = useWallet();
 
-    const authenticateWallet = async (): Promise<WalletAuthResult | null> => {
+    const authenticateWallet = async (referralCode?: string | null): Promise<WalletAuthResult | null> => {
         if (!connected || !publicKey || !signMessage) {
             throw new Error('Wallet not connected or does not support message signing');
         }
 
         try {
-            // Create message with timestamp nonce
+            // Create message with a timestamp as a nonce
             const timestamp = Date.now();
-            const message = `Clones desktop\nnonce: ${timestamp}`;
+            const nonce = `nonce: ${timestamp}`;
+
+            // --- Referral Code Logic ---
+            let message = `Clones desktop\n${nonce}`;
+            if (referralCode) {
+                message += `\nReferrer=${referralCode}`;
+            }
+            // -------------------------
 
             // Convert message to Uint8Array for signing
             const messageBytes = new TextEncoder().encode(message);
