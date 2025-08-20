@@ -1,8 +1,15 @@
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useMemo } from 'react';
+import { useAccount } from 'wagmi';
 
-export const useWalletName = () => {
-    const { wallet } = useWallet();
+/**
+ * Returns a readable wallet name (connector name), falling back to address short form.
+ */
+export function useWalletName() {
+    const { address, connector } = useAccount();
 
-    if (!wallet) return 'Solana Wallet';
-    return wallet.adapter.name || 'Solana Wallet';
-}; 
+    return useMemo(() => {
+        if (connector?.name) return connector.name;
+        if (!address) return 'Wallet';
+        return `${address.slice(0, 6)}…${address.slice(-4)}`;
+    }, [address, connector?.name]);
+}

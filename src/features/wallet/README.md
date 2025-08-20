@@ -1,11 +1,11 @@
-# Solana Wallet Integration
+# Base Blockchain Wallet Integration
 
-This feature provides complete Solana wallet management with `@solana/wallet-adapter`, isolated and organized for better maintainability.
+This feature provides complete Base blockchain wallet management with `wagmi` and `RainbowKit`, isolated and organized for better maintainability.
 
 ## Installation
 
 ```bash
-npm install @solana/wallet-adapter-react @solana/wallet-adapter-wallets @solana/wallet-adapter-react-ui @solana/web3.js
+npm install wagmi viem @rainbow-me/rainbowkit @tanstack/react-query
 ```
 
 ## Structure
@@ -59,22 +59,31 @@ import { useWalletAuth } from '../features/wallet';
 import { useWalletName } from '../features/wallet/useWalletName';
 
 function MyComponent() {
-  const { authenticateWallet, connected } = useWalletAuth();
+  const { authenticateWallet, connected, isWalletClientLoading } = useWalletAuth();
   const walletName = useWalletName();
 
   const handleAuth = async () => {
-    if (!connected) return;
+    if (!connected || isWalletClientLoading) return;
     
-    const authData = await authenticateWallet();
-    // authData = { address, signature, timestamp, message }
-    
-    // Send to backend...
+    try {
+      const authData = await authenticateWallet();
+      // authData = { address, signature, timestamp, message }
+      
+      // Send to backend...
+    } catch (error) {
+      console.error('Authentication failed:', error);
+    }
   };
 
   return (
     <div>
       <p>Connected with: {walletName}</p>
-      <button onClick={handleAuth}>Authenticate</button>
+      <button 
+        onClick={handleAuth} 
+        disabled={!connected || isWalletClientLoading}
+      >
+        {isWalletClientLoading ? 'Loading Wallet...' : 'Authenticate'}
+      </button>
     </div>
   );
 }
@@ -82,13 +91,16 @@ function MyComponent() {
 
 ## Features
 
-- **Multi-wallet support** : Phantom, Solflare, Torus
+- **Multi-wallet support** : MetaMask, WalletConnect, Coinbase Wallet, and more
+- **Base blockchain support** : Optimized for Base mainnet and testnet
 - **Auto-connect** : Automatic reconnection on page reload
 - **Message signing** : Secure authentication with timestamp nonce
-- **Error handling** : Clear error messages and states
+- **Smart loading states** : Handles wallet client timing and loading states
+- **Error handling** : Clear error messages and robust error recovery
 - **Design system** : Follows CLONES design with purple theme
-- **Smart UI** : Dynamic messages based on connected wallet
-- **Environment config** : Uses `PUBLIC_API_URL` for backend communication
+- **Smart UI** : Dynamic messages based on connected wallet and network
+- **Environment config** : Uses `VITE_API_URL` for backend communication
+- **Timing management** : Prevents authentication attempts before wallet client is ready
 
 ## Authentication
 
@@ -100,14 +112,23 @@ The system uses message signing for backend authentication:
 import { useWalletAuth } from '../features/wallet';
 
 function AuthComponent() {
-  const { authenticateWallet, sendAuthToBackend } = useWalletAuth();
+  const { authenticateWallet, sendAuthToBackend, connected, isWalletClientLoading } = useWalletAuth();
 
   const handleAuth = async () => {
-    const authData = await authenticateWallet();
-    // authData contains: address, signature, timestamp, message
-    
-    // Send to backend
-    await sendAuthToBackend(authData, 'https://your-api.com', 'optional-token');
+    if (!connected || isWalletClientLoading) {
+      console.error('Wallet not ready for authentication');
+      return;
+    }
+
+    try {
+      const authData = await authenticateWallet();
+      // authData contains: address, signature, timestamp, message
+      
+      // Send to backend
+      await sendAuthToBackend(authData, 'optional-token');
+    } catch (error) {
+      console.error('Authentication failed:', error.message);
+    }
   };
 }
 ```
@@ -119,41 +140,104 @@ Clones desktop
 nonce: 1703123456789
 ```
 
+## Loading States & Timing
+
+The wallet integration handles various loading states to ensure smooth user experience:
+
+### useWalletAuth Hook States
+
+```tsx
+const { 
+  authenticateWallet, 
+  sendAuthToBackend, 
+  connected, 
+  address, 
+  isWalletClientLoading  // NEW: Indicates if wallet client is loading
+} = useWalletAuth();
+```
+
+### Best Practices
+
+1. **Always check loading state before authentication**:
+```tsx
+const handleAuth = async () => {
+  if (!connected || isWalletClientLoading) {
+    return; // Don't attempt auth if wallet client isn't ready
+  }
+  
+  try {
+    const authData = await authenticateWallet();
+    // Process authentication...
+  } catch (error) {
+    // Handle timing or connection errors
+  }
+};
+```
+
+2. **Provide visual feedback during loading**:
+```tsx
+<button disabled={!connected || isWalletClientLoading}>
+  {isWalletClientLoading ? 'Loading Wallet...' : 'Authenticate'}
+</button>
+```
+
+3. **Handle auto-authentication timing**:
+```tsx
+useEffect(() => {
+  if (connected && token && !isWalletClientLoading) {
+    // Safe to auto-authenticate
+    handleAuth();
+  }
+}, [connected, token, isWalletClientLoading]);
+```
+
 ## Security
 
-- **Message signing** : Cryptographic verification
+- **Message signing** : Cryptographic verification using Ethereum standards
 - **Timestamp nonce** : Protection against replay attacks
 - **Backend validation** : Server-side verification
-- **Error handling** : Secure error management
+- **Error handling** : Secure error management with proper timing checks
+- **Network validation** : Ensures connection to correct Base network
+- **Client state validation** : Prevents authentication attempts with invalid wallet client state
 
 ## Supported wallets
 
-- **Phantom** : Most popular wallet
-- **Solflare** : Robust alternative
-- **Torus** : Social wallet
+- **MetaMask** : Most popular Ethereum wallet
+- **WalletConnect** : Protocol for connecting mobile wallets
+- **Coinbase Wallet** : Native Base support
+- **Rainbow** : Popular mobile wallet
+- **Trust Wallet** : Multi-chain support
 
 ## Environment Variables
 
 Create a `.env` file in your project root:
 
 ```env
-PUBLIC_API_URL=http://localhost:8001
+VITE_API_URL=http://localhost:8001
+VITE_WALLETCONNECT_PROJECT_ID=your-project-id-from-walletconnect-cloud
 ```
 
-This URL is used for backend authentication communication.
+- `VITE_API_URL`: Backend URL
+- `VITE_AUTH_ENDPOINT`: Backend API URL for authentication communication
+- `VITE_WALLETCONNECT_PROJECT_ID`: Get this from [WalletConnect Cloud](https://cloud.walletconnect.com)
 
 ## Benefits
 
 1. **Isolation** : All wallet logic grouped together
 2. **Reusability** : Centralized imports via index.ts
 3. **Maintainability** : Clear and documented structure
-4. **Scalability** : Easy to add new wallets
+4. **Scalability** : Easy to add new wallets and chains
 5. **Testability** : Isolated and testable components
-6. **Smart UX** : Dynamic interface based on wallet state
-7. **Environment flexibility** : Configurable backend URL
+6. **Smart UX** : Dynamic interface based on wallet and network state
+7. **Environment flexibility** : Configurable backend URL and WalletConnect project
+8. **Base optimized** : Native support for Base blockchain features
+9. **Robust timing** : Proper handling of wallet client loading states
+10. **Error resilience** : Graceful handling of connection timing issues
 
 ## Resources
 
-- [Solana Wallet Adapter Documentation](https://solana.com/developers/cookbook/wallets/connect-wallet-react)
-- [Solana Web3.js](https://solana-labs.github.io/solana-web3.js/)
-- [Wallet Standard](https://github.com/solana-labs/wallet-standard) 
+- [Wagmi Documentation](https://wagmi.sh/)
+- [RainbowKit Documentation](https://www.rainbowkit.com/)
+- [Viem Documentation](https://viem.sh/)
+- [Base Documentation](https://docs.base.org/)
+- [WalletConnect Cloud](https://cloud.walletconnect.com/) 

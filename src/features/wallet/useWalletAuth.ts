@@ -1,89 +1,160 @@
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { useAccount, useWalletClient, useSignMessage } from 'wagmi';
 
-export interface WalletAuthResult {
-    address: string;
-    signature: string;
+/**
+ * Wait until a getter returns a truthy value (or timeout).
+ * This prevents signing too early when walletClient isn't ready yet.
+ */
+async function waitForTruthy<T>(
+    getter: () => T | undefined | null,
+    {
+        intervalMs = 75,
+        timeoutMs = 8000,
+    }: { intervalMs?: number; timeoutMs?: number } = {}
+): Promise<T> {
+    const start = Date.now();
+    return new Promise<T>((resolve, reject) => {
+        const tick = () => {
+            const val = getter();
+            if (val) return resolve(val);
+            if (Date.now() - start >= timeoutMs) {
+                return reject(new Error('Wallet client did not initialize in time'));
+            }
+            setTimeout(tick, intervalMs);
+        };
+        tick();
+    });
+}
+
+export type AuthPayload = {
+    address: `0x${string}`;
+    signature: `0x${string}`;
     timestamp: number;
     message: string;
-}
-
-export interface BackendPayload {
-    address: string;
-    signature: string;
-    timestamp: number;
-    token?: string;
-}
+    ref?: string | null;
+};
 
 export function useWalletAuth() {
-    const { publicKey, signMessage, connected } = useWallet();
+    const { address, isConnected } = useAccount();
+    const { data: walletClient, isLoading: isWalletClientLoadingRaw } = useWalletClient();
+    const { signMessageAsync } = useSignMessage();
 
-    const authenticateWallet = async (referralCode?: string | null): Promise<WalletAuthResult | null> => {
-        if (!connected || !publicKey || !signMessage) {
-            throw new Error('Wallet not connected or does not support message signing');
-        }
+    const [isSigning, setIsSigning] = useState(false);
+    const signingRef = useRef(false);
 
-        try {
-            // Create message with a timestamp as a nonce
-            const timestamp = Date.now();
-            const nonce = `nonce: ${timestamp}`;
+    // Derived flag: when connected but the wallet client isn't ready yet
+    const isWalletClientLoading = useMemo(() => {
+        if (!isConnected) return false;
+        return isWalletClientLoadingRaw || !walletClient;
+    }, [isConnected, isWalletClientLoadingRaw, walletClient]);
 
-            // --- Referral Code Logic ---
-            let message = `Clones desktop\n${nonce}`;
-            if (referralCode) {
-                message += `\nReferrer=${referralCode}`;
+    const isWalletReady = useCallback(() => {
+        return Boolean(isConnected && walletClient);
+    }, [isConnected, walletClient]);
+
+    /**
+     * Build the exact message to sign. Keep formatting stable for backend verification.
+     */
+    const buildSignMessage = useCallback((timestamp: number, ref?: string | null) => {
+        const header = 'Clones desktop';
+        const base = `${header}\nnonce: ${timestamp}`;
+        return ref ? `${base}\nref: ${ref}` : base;
+    }, []);
+
+    /**
+     * Trigger the wallet signature once the wallet client is truly ready.
+     */
+    const authenticateWallet = useCallback(
+        async (ref?: string | null): Promise<AuthPayload> => {
+            if (!isConnected) {
+                throw new Error('Wallet not connected');
             }
-            // -------------------------
+            if (signingRef.current) {
+                throw new Error('Authentication already in progress');
+            }
 
-            // Convert message to Uint8Array for signing
-            const messageBytes = new TextEncoder().encode(message);
-            const signature = await signMessage(messageBytes);
-            const signatureBase64 = btoa(String.fromCharCode(...new Uint8Array(signature)));
+            signingRef.current = true;
+            setIsSigning(true);
 
-            return {
-                address: publicKey.toString(),
-                signature: signatureBase64,
-                timestamp,
-                message
+            try {
+                // Wait explicitly for wallet client init to avoid race conditions
+                await waitForTruthy(() => walletClient, { intervalMs: 80, timeoutMs: 8000 });
+
+                const ts = Date.now();
+                const message = buildSignMessage(ts, ref);
+
+                const signature = await signMessageAsync({ message });
+
+                if (!address) {
+                    throw new Error('Missing address after signing');
+                }
+
+                return {
+                    address,
+                    signature,
+                    timestamp: ts,
+                    message,
+                    ref,
+                };
+            } finally {
+                signingRef.current = false;
+                setIsSigning(false);
+            }
+        },
+        [address, isConnected, signMessageAsync, walletClient, buildSignMessage]
+    );
+
+    /**
+     * Send the signed payload to your backend.
+     * Defaults to `${VITE_API_URL}/api/v1/wallet/connect` unless VITE_AUTH_ENDPOINT overrides it.
+     */
+    const sendAuthToBackend = useCallback(
+        async (payload: AuthPayload, token?: string | null) => {
+            const API_URL = import.meta.env.VITE_API_URL;
+            if (!API_URL) {
+                throw new Error('VITE_API_URL is not set');
+            }
+
+            const AUTH_PATH = import.meta.env.VITE_AUTH_ENDPOINT || '/api/v1/wallet/connect';
+
+            // Merge token into the payload body (required by backend schema)
+            const body = {
+                ...payload,
+                ...(token ? { token } : {}),
             };
-        } catch (error) {
-            console.error('Failed to authenticate wallet:', error);
-            throw error;
-        }
-    };
 
-    const sendAuthToBackend = async (authData: WalletAuthResult, token?: string) => {
-        // TODO: Fix env var loading
-        const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8001';
+            const url = `${API_URL}${AUTH_PATH}`;
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body),
+            });
 
-        const payload: BackendPayload = {
-            address: authData.address,
-            signature: authData.signature,
-            timestamp: authData.timestamp
-        };
+            if (!res.ok) {
+                const text = await res.text().catch(() => '');
+                throw new Error(`Backend responded with ${res.status}: ${text || 'Unknown error'}`);
+            }
 
-        if (token) {
-            payload.token = token;
-        }
+            return res.json().catch(() => ({}));
+        },
+        []
+    );
 
-        const response = await fetch(`${apiUrl}/api/v1/wallet/connect`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-            throw new Error(`Backend authentication failed: ${response.statusText}`);
-        }
-
-        return response.json();
-    };
 
     return {
+        // actions
         authenticateWallet,
         sendAuthToBackend,
-        connected,
-        publicKey
+
+        // states
+        connected: isConnected,
+        address,
+        isSigning,
+        isWalletClientLoading,
+
+        // helpers
+        isWalletReady,
     };
-} 
+}

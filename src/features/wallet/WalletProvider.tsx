@@ -1,45 +1,50 @@
-import React, { useMemo } from 'react';
-import { ConnectionProvider, WalletProvider as SolanaWalletProvider } from '@solana/wallet-adapter-react';
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
+import React from 'react';
+import { WagmiProvider } from 'wagmi';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
-    PhantomWalletAdapter,
-    SolflareWalletAdapter,
-    TorusWalletAdapter,
-} from '@solana/wallet-adapter-wallets';
-import { clusterApiUrl } from '@solana/web3.js';
+    RainbowKitProvider,
+    getDefaultConfig,
+    lightTheme,
+} from '@rainbow-me/rainbowkit';
+import { base, baseSepolia } from 'wagmi/chains';
 
-// Import the styles for the wallet modal
-import '@solana/wallet-adapter-react-ui/styles.css';
+// Import RainbowKit styles once
+import '@rainbow-me/rainbowkit/styles.css';
 
 interface WalletProviderProps {
     children: React.ReactNode;
 }
 
+/**
+ * Build wagmi config for Base + Base Sepolia.
+ * We keep SSR disabled and enable autoConnect.
+ */
+const config = getDefaultConfig({
+    appName: 'Clones Desktop',
+    projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo-project-id',
+    chains: [base, baseSepolia],
+    ssr: false,
+    // RainbowKit enables autoConnect via connectors under the hood.
+    // With getDefaultConfig v2, autoConnect is true by default.
+});
+
+const queryClient = new QueryClient();
+
 export default function WalletProvider({ children }: WalletProviderProps) {
-    // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'
-    const endpoint = useMemo(() => clusterApiUrl('mainnet-beta'), []);
-
-    // We can also provide a custom RPC endpoint, but we're using the default for now
-    // const endpoint = useMemo(() => 'https://api.mainnet-beta.solana.com', []);
-
-    // @solana/wallet-adapter-wallets includes all the adapters but supports tree shaking and lazy loading
-    // Only the wallets you configure here will be compiled into the application
-    const wallets = useMemo(
-        () => [
-            new PhantomWalletAdapter(),
-            new SolflareWalletAdapter(),
-            new TorusWalletAdapter(),
-        ],
-        []
-    );
-
     return (
-        <ConnectionProvider endpoint={endpoint}>
-            <SolanaWalletProvider wallets={wallets} autoConnect>
-                <WalletModalProvider>
+        <WagmiProvider config={config}>
+            <QueryClientProvider client={queryClient}>
+                <RainbowKitProvider
+                    modalSize="compact"
+                    theme={lightTheme({
+                        borderRadius: 'medium',
+                        fontStack: 'rounded',
+                        overlayBlur: 'small',
+                    })}
+                >
                     {children}
-                </WalletModalProvider>
-            </SolanaWalletProvider>
-        </ConnectionProvider>
+                </RainbowKitProvider>
+            </QueryClientProvider>
+        </WagmiProvider>
     );
-} 
+}
