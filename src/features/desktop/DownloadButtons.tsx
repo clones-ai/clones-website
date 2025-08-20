@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Rocket } from 'lucide-react';
 
-const MOCK_DOWNLOAD_URL = 'https://github.com/clones-sol/desktop/actions/runs/16862612118/artifacts/3729147013';
+const MOCK_DOWNLOAD_URL = 'https://github.com/clones-ai/clones-desktop/actions/runs/16862612118/artifacts/3729147013';
 const DEEPLINK_SCHEME = import.meta.env.VITE_DESKTOP_SCHEME || 'clones-dev';
 const DOWNLOAD_DURATION_MS = 3000; // Simulate a 3-second download
 
