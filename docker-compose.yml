@@ -8,7 +8,7 @@ services:
     tty: true
     ports:
       - "5173:5173"
-    command: npm run dev
+    command: npm run dev -- --host 0.0.0.0
     volumes: 
       - ./:/app/
       - /app/node_modules
