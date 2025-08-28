@@ -35,22 +35,46 @@ export type AuthPayload = {
 };
 
 export function useWalletAuth() {
-    const { address, isConnected } = useAccount();
+    const { address, isConnected, status } = useAccount();
     const { data: walletClient, isLoading: isWalletClientLoadingRaw } = useWalletClient();
     const { signMessageAsync } = useSignMessage();
 
     const [isSigning, setIsSigning] = useState(false);
     const signingRef = useRef(false);
 
-    // Derived flag: when connected but the wallet client isn't ready yet
-    const isWalletClientLoading = useMemo(() => {
-        if (!isConnected) return false;
-        return isWalletClientLoadingRaw || !walletClient;
-    }, [isConnected, isWalletClientLoadingRaw, walletClient]);
+    // Compute unified wallet state
+    const walletState = useMemo(() => {
+        if (!isConnected || status !== 'connected') {
+            return {
+                connected: false,
+                ready: false,
+                loading: false,
+                status: 'disconnected' as const
+            };
+        }
+
+        const clientLoading = isWalletClientLoadingRaw || !walletClient;
+        
+        if (clientLoading) {
+            return {
+                connected: true,
+                ready: false,
+                loading: true,
+                status: 'connecting' as const
+            };
+        }
+
+        return {
+            connected: true,
+            ready: true,
+            loading: false,
+            status: 'ready' as const
+        };
+    }, [isConnected, status, isWalletClientLoadingRaw, walletClient]);
 
     const isWalletReady = useCallback(() => {
-        return Boolean(isConnected && walletClient);
-    }, [isConnected, walletClient]);
+        return walletState.ready;
+    }, [walletState.ready]);
 
     /**
      * Build the exact message to sign. Keep formatting stable for backend verification.
@@ -148,13 +172,16 @@ export function useWalletAuth() {
         authenticateWallet,
         sendAuthToBackend,
 
-        // states
-        connected: isConnected,
+        // unified state
+        connected: walletState.connected,
+        ready: walletState.ready,
+        loading: walletState.loading,
+        status: walletState.status,
         address,
         isSigning,
-        isWalletClientLoading,
 
-        // helpers
+        // legacy compatibility
+        isWalletClientLoading: walletState.loading,
         isWalletReady,
     };
 }

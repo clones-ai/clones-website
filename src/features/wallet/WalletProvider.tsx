@@ -17,7 +17,7 @@ interface WalletProviderProps {
 
 /**
  * Build wagmi config for Base + Base Sepolia.
- * We keep SSR disabled and enable autoConnect.
+ * We keep SSR disabled and enable autoConnect with proper error handling.
  */
 const config = getDefaultConfig({
     appName: 'Clones Desktop',
@@ -28,7 +28,17 @@ const config = getDefaultConfig({
     // With getDefaultConfig v2, autoConnect is true by default.
 });
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            retry: 3,
+            retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+        },
+        mutations: {
+            retry: 1,
+        },
+    },
+});
 
 export default function WalletProvider({ children }: WalletProviderProps) {
     return (

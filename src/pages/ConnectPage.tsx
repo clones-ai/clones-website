@@ -13,7 +13,7 @@ export default function ConnectPage() {
     const [success, setSuccess] = useState(false);
 
     const { openConnectModal } = useConnectModal();
-    const { authenticateWallet, sendAuthToBackend, connected, isWalletReady, isWalletClientLoading } = useWalletAuth();
+    const { authenticateWallet, sendAuthToBackend, connected, ready, loading, status } = useWalletAuth();
     const walletName = useWalletName();
 
     const token = searchParams.get('token') || '';
@@ -31,8 +31,7 @@ export default function ConnectPage() {
                 throw new Error('Wallet not connected. Please connect your wallet first.');
             }
 
-            if (!isWalletReady()) {
-                // Defensive check: avoid hitting a race condition
+            if (!ready) {
                 throw new Error('Wallet is not ready for authentication. Please wait a moment and try again.');
             }
 
@@ -53,7 +52,7 @@ export default function ConnectPage() {
         } finally {
             setConnecting(false);
         }
-    }, [connected, isWalletReady, authenticateWallet, refCode, sendAuthToBackend, token, navigate]);
+    }, [connected, ready, authenticateWallet, refCode, sendAuthToBackend, token, navigate]);
 
     // If token is present and we are NOT connected, open the wallet modal automatically.
     useEffect(() => {
@@ -67,8 +66,7 @@ export default function ConnectPage() {
         if (
             token &&
             connected &&
-            isWalletReady() &&
-            !isWalletClientLoading &&
+            ready &&
             !connecting &&
             !success &&
             !error &&
@@ -80,8 +78,7 @@ export default function ConnectPage() {
     }, [
         token,
         connected,
-        isWalletReady,
-        isWalletClientLoading,
+        ready,
         connecting,
         success,
         error,
@@ -165,25 +162,30 @@ export default function ConnectPage() {
                             <div className="text-center">
                                 {connected ? (
                                     <div className="space-y-4">
-                                        <div className="flex items-center justify-center gap-3 px-6 py-3 bg-[#1A1A1A]/60 border border-green-500/30 rounded-full">
-                                            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                        <div className={`flex items-center justify-center gap-3 px-6 py-3 bg-[#1A1A1A]/60 border rounded-full ${
+                                            ready ? 'border-green-500/30' : 'border-yellow-500/30'
+                                        }`}>
+                                            <div className={`w-2 h-2 rounded-full ${
+                                                ready ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-spin'
+                                            }`}></div>
                                             <span className="text-[#F8FAFC] font-medium">
-                                                {isWalletClientLoading ? 'Preparing Wallet…' : 'Wallet Connected'}
+                                                {status === 'connecting' ? 'Preparing Wallet…' : 
+                                                 status === 'ready' ? 'Wallet Connected' : 'Wallet Connected'}
                                             </span>
                                         </div>
 
                                         <button
                                             onClick={connectWallet}
-                                            disabled={connecting || !isWalletReady()}
+                                            disabled={connecting || !ready}
                                             className="group relative w-full inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#1A1A1A] border border-[#8B5CF6]/30 hover:border-[#8B5CF6]/60 text-[#F8FAFC] rounded-full transition-all duration-300 hover:shadow-[0_0_20px_rgba(139,92,246,0.4)] hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#8B5CF6]/10 to-[#3B82F6]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                                            {connecting || isWalletClientLoading ? (
+                                            {connecting || loading ? (
                                                 <>
                                                     <div className="relative w-5 h-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
                                                     <span className="relative font-medium">
-                                                        {isWalletClientLoading ? 'Preparing Wallet…' : 'Authenticating…'}
+                                                        {connecting ? 'Authenticating…' : 'Preparing Wallet…'}
                                                     </span>
                                                 </>
                                             ) : (
