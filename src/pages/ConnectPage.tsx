@@ -54,12 +54,12 @@ export default function ConnectPage() {
         }
     }, [connected, ready, authenticateWallet, refCode, sendAuthToBackend, token, navigate]);
 
-    // If token is present and we are NOT connected, open the wallet modal automatically.
+    // If token is present and we are NOT connected (and not reconnecting), open the wallet modal automatically.
     useEffect(() => {
-        if (token && !connected && openConnectModal) {
+        if (token && !connected && !loading && openConnectModal && status === 'disconnected') {
             openConnectModal();
         }
-    }, [token, connected, openConnectModal]);
+    }, [token, connected, loading, openConnectModal, status]);
 
     // Single auto-auth effect: run once when wallet becomes truly ready
     useEffect(() => {
@@ -169,7 +169,8 @@ export default function ConnectPage() {
                                                 ready ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-spin'
                                             }`}></div>
                                             <span className="text-[#F8FAFC] font-medium">
-                                                {status === 'connecting' ? 'Preparing Wallet…' : 
+                                                {status === 'reconnecting' ? 'Reconnecting Wallet…' :
+                                                 status === 'connecting' ? 'Preparing Wallet…' : 
                                                  status === 'ready' ? 'Wallet Connected' : 'Wallet Connected'}
                                             </span>
                                         </div>

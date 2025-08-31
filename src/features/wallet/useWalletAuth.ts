@@ -35,7 +35,7 @@ export type AuthPayload = {
 };
 
 export function useWalletAuth() {
-    const { address, isConnected, status } = useAccount();
+    const { address, isConnected, status, isReconnecting } = useAccount();
     const { data: walletClient, isLoading: isWalletClientLoadingRaw } = useWalletClient();
     const { signMessageAsync } = useSignMessage();
 
@@ -44,6 +44,16 @@ export function useWalletAuth() {
 
     // Compute unified wallet state
     const walletState = useMemo(() => {
+        // If still reconnecting from persisted state, don't show as disconnected
+        if (isReconnecting) {
+            return {
+                connected: false,
+                ready: false,
+                loading: true,
+                status: 'reconnecting' as const
+            };
+        }
+
         if (!isConnected || status !== 'connected') {
             return {
                 connected: false,
@@ -70,7 +80,7 @@ export function useWalletAuth() {
             loading: false,
             status: 'ready' as const
         };
-    }, [isConnected, status, isWalletClientLoadingRaw, walletClient]);
+    }, [isConnected, status, isReconnecting, isWalletClientLoadingRaw, walletClient]);
 
     const isWalletReady = useCallback(() => {
         return walletState.ready;
