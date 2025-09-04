@@ -14,7 +14,7 @@ const BASESCAN_BASE_URL = import.meta.env.VITE_BASESCAN_BASE_URL || 'https://bas
 
 interface TransactionSession {
   sessionId: string;
-  transactionType: 'createFactory' | 'fundPool' | 'claimRewards' | 'createAndFundFactory';
+  transactionType: 'createFactory' | 'fundPool' | 'claimRewards' | 'createAndFundFactory' | 'withdrawPool';
   transactionParams: {
     type: string;
     creator?: string;
@@ -438,6 +438,8 @@ export default function TransactionPage() {
         return 'Create & Fund Factory';
       case 'fundPool':
         return 'Fund Factory';
+      case 'withdrawPool':
+        return 'Withdraw from Factory';
       case 'claimRewards':
         return 'Claim Rewards';
       default:
@@ -454,6 +456,8 @@ export default function TransactionPage() {
         return `Create factory for ${params?.token || 'token'} and fund with ${params?.amount || ''} ${params?.token || ''}`;
       case 'fundPool':
         return `Fund factory with ${params?.amount || ''} ${params?.token || ''}`;
+      case 'withdrawPool':
+        return `Withdraw ${params?.amount || ''} ${params?.token || ''} from factory`;
       case 'claimRewards':
         return `Claim pending rewards from pool ${params?.poolAddress?.slice(0, 6)}...${params?.poolAddress?.slice(-4)}`;
       default:
