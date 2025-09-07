@@ -1,5 +1,4 @@
-import React from 'react';
-import { Reveal, RevealUp } from '../motion/Reveal';
+import { RevealUp } from '../motion/Reveal';
 import { AnimatedButton } from '../motion/AnimatedButton';
 import { UnifiedSpline } from '../shared/UnifiedSpline';
 
@@ -16,8 +15,8 @@ export function MarketplaceHero() {
           fallbackGradient="bg-transparent"
         />
       </div>
-      
-      
+
+
       <div className="relative max-w-4xl mx-auto text-center flex-1 flex flex-col justify-center z-10">
         <RevealUp distance={8}>
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light text-text-primary tracking-wide mb-8 leading-tight font-system">
@@ -45,11 +44,11 @@ export function MarketplaceHero() {
               </p>
             </RevealUp>
           </div>
-          
+
           {/* CTA Button */}
           <RevealUp distance={6}>
             <div className="p-4">
-              <a 
+              <a
                 href="https://clones.gitbook.io/clones.docs/the-forge/data-marketplace"
                 target="_blank"
                 rel="noopener noreferrer"

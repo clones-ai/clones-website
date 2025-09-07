@@ -1,16 +1,16 @@
-import { useParams } from 'react-router-dom';
-import { DownloadButtons } from '.';
+//import { useParams } from 'react-router-dom';
+//import { DownloadButtons } from '.';
 import { Gift } from 'lucide-react';
 import { RevealUp } from '../../components/motion/Reveal';
 
 export default function ReferralPage() {
-    const { referralCode } = useParams<{ referralCode?: string }>();
+    // const { referralCode } = useParams<{ referralCode?: string }>();
 
     return (
         <section className="min-h-screen flex flex-col justify-center py-24 px-4 sm:px-6 relative overflow-hidden">
             <div className="max-w-2xl mx-auto">
 
-                {/* Header */}
+                {/*
                 <RevealUp distance={8}>
                     <div className="text-center mb-16">
                         <div className="w-20 h-20 mx-auto mb-6 ultra-premium-glass-card rounded-full flex items-center justify-center">
@@ -35,7 +35,7 @@ export default function ReferralPage() {
                     </div>
                 </RevealUp>
 
-                {/* Download Card */}
+       
                 <RevealUp distance={6}>
                     <div className="ultra-premium-glass-card rounded-2xl p-8">
                         <DownloadButtons referralCode={referralCode} />
@@ -54,6 +54,19 @@ export default function ReferralPage() {
                     <footer className="mt-12 text-center text-sm text-text-muted">
                         <p>If you have any questions, please check our <a href="https://clones.gitbook.io/clones.docs" target="_blank" rel="noopener noreferrer" className="text-primary-400 hover:text-primary-300 transition-colors">docs</a></p>
                     </footer>
+                </RevealUp>
+                */}
+                <RevealUp distance={8}>
+                    <div className="text-center mb-16">
+                        <div className="w-20 h-20 mx-auto mb-6 ultra-premium-glass-card rounded-full flex items-center justify-center">
+                            <Gift className="w-10 h-10 text-primary-500" />
+                        </div>
+
+                        <h1 className="text-4xl md:text-5xl font-light text-text-primary mb-6 tracking-wide font-system">Download the App</h1>
+                        <p className="text-text-secondary text-lg leading-relaxed max-w-xl mx-auto">
+                            Soon...
+                        </p>
+                    </div>
                 </RevealUp>
             </div>
         </section>

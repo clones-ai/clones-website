@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { XIcon } from 'lucide-react';
 import { RevealUp } from '../components/motion/Reveal';
 import { AnimatedButton } from '../components/motion/AnimatedButton';
-import { UnifiedSpline } from '../components/shared/UnifiedSpline';
 
 export default function HomePage() {
   const [showVideoPopup, setShowVideoPopup] = useState(false);

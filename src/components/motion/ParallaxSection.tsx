@@ -8,9 +8,9 @@ interface ParallaxSectionProps {
   offset?: number; // Initial offset
 }
 
-export function ParallaxSection({ 
-  children, 
-  speed = 0.5, 
+export function ParallaxSection({
+  children,
+  speed = 0.5,
   direction = 'up',
   className = '',
   offset = 0
@@ -22,10 +22,9 @@ export function ParallaxSection({
     const handleScroll = () => {
       if (!elementRef.current) return;
 
-      const rect = elementRef.current.getBoundingClientRect();
       const scrolled = window.pageYOffset;
       const rate = scrolled * -speed;
-      
+
       let translateX = 0;
       let translateY = 0;
 
@@ -86,8 +85,8 @@ interface ParallaxTransitionProps {
   intensity?: 'subtle' | 'medium' | 'strong';
 }
 
-export function ParallaxTransition({ 
-  className = '', 
+export function ParallaxTransition({
+  className = '',
   variant = 'orbs',
   colors = ['primary-500', 'primary-600', 'primary-700'],
   intensity = 'medium'
@@ -104,11 +103,11 @@ export function ParallaxTransition({
     const opacityMain = Math.round(config.opacity * 100);
     const opacitySecond = Math.round(config.opacity * 80);
     const opacityThird = Math.round(config.opacity * 60);
-    
+
     return (
       <>
         <ParallaxSection speed={config.speed} direction="up" className="absolute top-20 left-1/4">
-          <div 
+          <div
             className={`w-96 h-96 rounded-full ${config.blur} animate-pulse`}
             style={{
               backgroundColor: `rgb(var(--color-primary-500) / ${opacityMain}%)`
@@ -116,7 +115,7 @@ export function ParallaxTransition({
           ></div>
         </ParallaxSection>
         <ParallaxSection speed={config.speed * 1.2} direction="down" className="absolute top-40 right-1/3">
-          <div 
+          <div
             className={`w-80 h-80 rounded-full ${config.blur} animate-pulse`}
             style={{
               backgroundColor: `rgb(var(--color-primary-600) / ${opacitySecond}%)`,
@@ -125,7 +124,7 @@ export function ParallaxTransition({
           ></div>
         </ParallaxSection>
         <ParallaxSection speed={config.speed * 0.8} direction="left" className="absolute bottom-20 left-1/3">
-          <div 
+          <div
             className={`w-72 h-72 rounded-full ${config.blur} animate-pulse`}
             style={{
               backgroundColor: `rgb(var(--color-primary-700) / ${opacityThird}%)`,
@@ -140,7 +139,7 @@ export function ParallaxTransition({
   const renderLines = () => (
     <>
       <ParallaxSection speed={config.speed} direction="right" className="absolute top-1/4 left-0 w-full">
-        <div 
+        <div
           className="h-px"
           style={{
             background: `linear-gradient(to right, transparent, rgba(var(--color-primary-500), ${config.opacity}), transparent)`
@@ -148,7 +147,7 @@ export function ParallaxTransition({
         ></div>
       </ParallaxSection>
       <ParallaxSection speed={config.speed * 1.5} direction="left" className="absolute bottom-1/3 left-0 w-full">
-        <div 
+        <div
           className="h-px"
           style={{
             background: `linear-gradient(to right, transparent, rgba(var(--color-primary-600), ${config.opacity * 0.8}), transparent)`

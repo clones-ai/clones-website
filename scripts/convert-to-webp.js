@@ -2,10 +2,6 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 /**
  * WebP Conversion Script using Sharp (high-performance image processing)
@@ -14,13 +10,12 @@ const __dirname = path.dirname(__filename);
 
 const SUPPORTED_FORMATS = ['.jpg', '.jpeg', '.png'];
 const WEBP_QUALITY = 85; // High quality WebP
-const OUTPUT_SUFFIX = ''; // No suffix, replace original references
 
 async function checkSharpAvailable() {
     try {
         const sharp = await import('sharp');
         return sharp.default;
-    } catch (error) {
+    } catch {
         console.log('📦 Sharp not installed. Installing...');
         console.log('Run: npm install --save-dev sharp');
         return null;

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Reveal, RevealUp } from '../motion/Reveal';
+import { useState } from 'react';
+import { RevealUp } from '../motion/Reveal';
 import { AnimatedButton } from '../motion/AnimatedButton';
 
 interface SlideData {

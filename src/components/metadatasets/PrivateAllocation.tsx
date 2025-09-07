@@ -1,5 +1,5 @@
 import { Users, Database, Lock, BarChart3 } from 'lucide-react';
-import { Reveal, RevealUp, RevealLeft, RevealRight } from '../motion/Reveal';
+import { RevealUp, RevealLeft, RevealRight } from '../motion/Reveal';
 import { TiltCard } from '../motion/TiltCard';
 
 export function PrivateAllocation() {
@@ -84,36 +84,33 @@ export function PrivateAllocation() {
               <TiltCard key={index} className="ultra-premium-glass-card rounded-2xl p-8 transition-all duration-300 hover:shadow-ultra-premium-hover">
                 <RevealComponent distance={6 + index}>
                   <div className="flex items-center gap-4 mb-6">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${allocation.shadow} ${
-                      allocation.color === 'green-500' 
-                        ? 'bg-green-500/20 border border-green-500/40' 
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${allocation.shadow} ${allocation.color === 'green-500'
+                        ? 'bg-green-500/20 border border-green-500/40'
                         : allocation.color === 'primary-500'
-                        ? 'bg-primary-500/25 border border-primary-500/40'
-                        : allocation.color === 'primary-600'
-                        ? 'bg-primary-600/25 border border-primary-600/40'
-                        : 'bg-primary-700/25 border border-primary-700/40'
-                    }`}>
-                      <Icon className={`w-6 h-6 ${
-                        allocation.color === 'green-500' 
-                          ? 'text-green-500' 
-                          : allocation.color === 'primary-500'
-                          ? 'text-primary-500'
+                          ? 'bg-primary-500/25 border border-primary-500/40'
                           : allocation.color === 'primary-600'
-                          ? 'text-primary-600'
-                          : 'text-primary-700'
-                      }`} />
+                            ? 'bg-primary-600/25 border border-primary-600/40'
+                            : 'bg-primary-700/25 border border-primary-700/40'
+                      }`}>
+                      <Icon className={`w-6 h-6 ${allocation.color === 'green-500'
+                          ? 'text-green-500'
+                          : allocation.color === 'primary-500'
+                            ? 'text-primary-500'
+                            : allocation.color === 'primary-600'
+                              ? 'text-primary-600'
+                              : 'text-primary-700'
+                        }`} />
                     </div>
                     <div>
                       <h3 className="text-xl font-medium text-text-primary font-system">{allocation.title}</h3>
-                      <p className={`text-sm font-system ${
-                        allocation.color === 'green-500' 
-                          ? 'text-green-500' 
+                      <p className={`text-sm font-system ${allocation.color === 'green-500'
+                          ? 'text-green-500'
                           : allocation.color === 'primary-500'
-                          ? 'text-primary-500'
-                          : allocation.color === 'primary-600'
-                          ? 'text-primary-600'
-                          : 'text-primary-700'
-                      }`}>{allocation.allocation}</p>
+                            ? 'text-primary-500'
+                            : allocation.color === 'primary-600'
+                              ? 'text-primary-600'
+                              : 'text-primary-700'
+                        }`}>{allocation.allocation}</p>
                     </div>
                   </div>
                   <div className="space-y-3 text-sm">

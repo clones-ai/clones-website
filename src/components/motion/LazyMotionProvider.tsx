@@ -55,6 +55,7 @@ export const OptimizedMotion = {
         const { isLowEndDevice, prefersReducedMotion } = useDeviceCapabilities();
 
         if (isLowEndDevice || prefersReducedMotion) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { animate, initial, exit, transition, variants, whileHover, whileTap, ...restProps } = props;
             return <div ref={ref} {...restProps} />;
         }
@@ -70,6 +71,7 @@ export const OptimizedMotion = {
         const { isLowEndDevice, prefersReducedMotion } = useDeviceCapabilities();
 
         if (isLowEndDevice || prefersReducedMotion) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { animate, initial, exit, transition, variants, whileHover, whileTap, ...restProps } = props;
             return <button ref={ref} {...restProps} />;
         }
@@ -85,6 +87,7 @@ export const OptimizedMotion = {
         const { isLowEndDevice, prefersReducedMotion } = useDeviceCapabilities();
 
         if (isLowEndDevice || prefersReducedMotion) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { animate, initial, exit, transition, variants, whileHover, whileTap, ...restProps } = props;
             return <section ref={ref} {...restProps} />;
         }

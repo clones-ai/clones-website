@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface OptimizedImageProps {
     src: string;
@@ -26,7 +26,6 @@ export function OptimizedImage({
     priority = false,
     sizes = '100vw',
     placeholder = 'empty',
-    quality = 85,
     onLoad,
     onError
 }: OptimizedImageProps) {

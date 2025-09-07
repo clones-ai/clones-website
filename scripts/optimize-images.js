@@ -2,10 +2,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 /**
  * Image optimization script for production builds
@@ -13,7 +10,6 @@ const __dirname = path.dirname(__filename);
  */
 
 const SUPPORTED_FORMATS = ['.jpg', '.jpeg', '.png'];
-const RESPONSIVE_SIZES = [320, 640, 1024, 1920];
 const WEBP_QUALITY = 85;
 
 async function findImages(directory) {
@@ -67,7 +63,7 @@ async function analyzeImageUsage() {
                         imageReferences.add(cleanPath);
                     });
                 }
-            } catch (error) {
+            } catch {
                 // Skip files that can't be read
             }
         }
@@ -90,7 +86,6 @@ async function generateOptimizationPlan() {
     };
 
     for (const imagePath of publicImages) {
-        const relativePath = imagePath.replace(path.join(process.cwd(), 'public'), '');
         const stats = await fs.stat(imagePath);
         const sizeKB = stats.size / 1024;
 

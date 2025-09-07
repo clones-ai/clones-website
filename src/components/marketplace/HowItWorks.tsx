@@ -1,4 +1,4 @@
-import { Reveal, RevealUp } from '../motion/Reveal';
+import { RevealUp } from '../motion/Reveal';
 import { TiltCard } from '../motion/TiltCard';
 
 export function HowItWorks() {

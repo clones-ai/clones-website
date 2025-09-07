@@ -36,7 +36,6 @@ export default function ConnectWalletButton() {
                             if (!connected) {
                                 return (
                                     <div className="flex items-center gap-2">
-                                        <WalletIcon className="w-5 h-5 text-[#94A3B8]" aria-hidden />
                                         <button
                                             onClick={openConnectModal}
                                             type="button"

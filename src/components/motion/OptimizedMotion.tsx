@@ -62,30 +62,35 @@ const LazyMotionSpan = lazy(async () => {
 
 // Fallback component for reduced motion
 const StaticDiv = React.forwardRef<HTMLDivElement, MotionProps>(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ({ initial, animate, exit, transition, variants, whileHover, whileTap, whileInView, viewport, ...props }, ref) => (
         <div ref={ref} {...props} />
     )
 );
 
 const StaticButton = React.forwardRef<HTMLButtonElement, MotionProps>(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ({ initial, animate, exit, transition, variants, whileHover, whileTap, whileInView, viewport, ...props }, ref) => (
         <button ref={ref} {...props} />
     )
 );
 
 const StaticSection = React.forwardRef<HTMLElement, MotionProps>(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ({ initial, animate, exit, transition, variants, whileHover, whileTap, whileInView, viewport, ...props }, ref) => (
         <section ref={ref} {...props} />
     )
 );
 
 const StaticH1 = React.forwardRef<HTMLHeadingElement, MotionProps>(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ({ initial, animate, exit, transition, variants, whileHover, whileTap, whileInView, viewport, ...props }, ref) => (
         <h1 ref={ref} {...props} />
     )
 );
 
 const StaticSpan = React.forwardRef<HTMLSpanElement, MotionProps>(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ({ initial, animate, exit, transition, variants, whileHover, whileTap, whileInView, viewport, ...props }, ref) => (
         <span ref={ref} {...props} />
     )

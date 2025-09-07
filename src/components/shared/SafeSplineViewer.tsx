@@ -8,16 +8,16 @@ interface SafeSplineViewerProps {
   fallbackGradient?: string;
 }
 
-export function SafeSplineViewer({ 
-  url, 
-  className = "", 
-  style = {}, 
+export function SafeSplineViewer({
+  url,
+  className = "",
+  style = {},
   loading = "lazy",
   fallbackGradient = "bg-gradient-to-br from-black via-gray-900 to-black"
 }: SafeSplineViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hasError, setHasError] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
@@ -31,7 +31,7 @@ export function SafeSplineViewer({
 
     // Initial dimension check
     updateDimensions();
-    
+
     // Monitor dimension changes
     const resizeObserver = new ResizeObserver(updateDimensions);
     if (containerRef.current) {
@@ -58,7 +58,7 @@ export function SafeSplineViewer({
     // Only load Spline if we have valid dimensions and no errors
     if (dimensions.width > 0 && dimensions.height > 0 && !hasError && containerRef.current) {
       setIsLoading(true);
-      
+
       const loadSplineViewer = () => {
         const splineViewer = document.createElement('spline-viewer');
         splineViewer.setAttribute('url', url);
@@ -70,7 +70,7 @@ export function SafeSplineViewer({
         splineViewer.setAttribute('interaction', 'false');
         splineViewer.setAttribute('camera-controls', 'false');
         splineViewer.style.pointerEvents = 'none';
-        
+
         // Set explicit dimensions to prevent WebGL errors
         splineViewer.style.width = '100%';
         splineViewer.style.height = '100%';
@@ -130,7 +130,7 @@ export function SafeSplineViewer({
   const showFallback = hasError || dimensions.width === 0 || dimensions.height === 0;
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className={`${className} ${showFallback ? fallbackGradient : ''}`}
       style={{

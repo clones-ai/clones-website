@@ -68,7 +68,7 @@ export function SmoothScroll({
       lenisRef.current?.destroy();
       lenisRef.current = null;
     };
-  }, []);
+  }, [options]);
 
   return <>{children}</>;
 }

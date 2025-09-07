@@ -10,7 +10,7 @@ interface LazySplineProps {
     fallback?: React.ReactNode;
 }
 
-export function LazySpline({ scene, className, fallback }: LazySplineProps) {
+export function LazySpline({ scene, className }: LazySplineProps) {
     return (
         <UnifiedSpline 
             url={scene} 

@@ -2,11 +2,6 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { execSync } from 'child_process';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 async function analyzeBundleSize() {
     const distPath = path.join(process.cwd(), 'dist');

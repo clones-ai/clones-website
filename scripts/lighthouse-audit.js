@@ -98,7 +98,7 @@ async function generateReport(results) {
 
     try {
         await fs.mkdir(reportDir, { recursive: true });
-    } catch (e) {
+    } catch {
         // Directory might already exist
     }
 
