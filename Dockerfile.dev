@@ -1,0 +1,34 @@
+FROM node:lts-slim
+
+WORKDIR /app
+
+ENV NODE_ENV=development
+
+# Install ALL system packages first (best caching)
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+        build-essential \
+        node-gyp \
+        pkg-config \
+        python-is-python3 \
+        curl && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Copy package files first for npm cache layer
+COPY package*.json ./
+
+# Install dependencies (separate cache layer)
+RUN npm ci
+
+# Copy source code LAST (changes most frequently)
+COPY . .
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:5173/ || exit 1
+
+# Expose port 5173 (Vite's default port)
+EXPOSE 5173
+
+# Default command
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

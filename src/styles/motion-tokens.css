@@ -1,0 +1,76 @@
+/* Motion Tokens - Système d'animation cohérent */
+:root {
+  /* === DURATIONS === */
+  --motion-duration-s: 150ms;
+  --motion-duration-m: 200ms;
+  --motion-duration-l: 300ms;
+
+  /* === EASINGS === */
+  --motion-ease-out-quad: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --motion-ease-in-out-cubic: cubic-bezier(0.645, 0.045, 0.355, 1);
+
+  /* === TRANSFORMS === */
+  --motion-translate-hover: 2px;
+  --motion-scale-hover: 1.01;
+
+  /* === SHADOWS === */
+  --shadow-lifted: 0 6px 40px rgba(0, 0, 0, 0.35);
+  --shadow-glow-hover: 0 0 40px rgba(139, 92, 246, 0.6);
+
+  /* === BLUR === */
+  --blur-backdrop: 20px;
+}
+
+/* === ANIMATION UTILITIES === */
+.motion-safe {
+  transition-duration: var(--motion-duration-m);
+  transition-timing-function: var(--motion-ease-out-quad);
+  contain: layout style;
+}
+
+.motion-hover-lift {
+  transition: transform var(--motion-duration-s) var(--motion-ease-out-quad),
+    box-shadow var(--motion-duration-s) var(--motion-ease-out-quad);
+  contain: layout style;
+}
+
+.motion-hover-lift:hover {
+  transform: translate3d(0, calc(-1 * var(--motion-translate-hover)), 0);
+  box-shadow: var(--shadow-lifted);
+}
+
+.motion-scale-hover {
+  transition: transform var(--motion-duration-s) var(--motion-ease-out-quad);
+  contain: layout style;
+}
+
+.motion-scale-hover:hover {
+  transform: scale(var(--motion-scale-hover));
+}
+
+.motion-glow-hover {
+  transition: box-shadow var(--motion-duration-m) var(--motion-ease-out-quad);
+  contain: layout style;
+}
+
+.motion-glow-hover:hover {
+  box-shadow: var(--shadow-glow-hover);
+}
+
+/* === PERFORMANCE OPTIMIZATIONS === */
+/* .motion-optimized removed - not used in codebase, .transform-gpu is used instead */
+
+/* === REDUCED MOTION === */
+/* Handled by index.css - more selective approach */
+
+/* === FOCUS STYLES === */
+.focus-ring {
+  outline: 2px solid rgba(139, 92, 246, 0.6);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid rgba(139, 92, 246, 0.8);
+  outline-offset: 2px;
+}

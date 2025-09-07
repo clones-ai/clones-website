@@ -1,0 +1,22 @@
+{
+  "optimized": {
+    "timestamp": "2025-09-05T09:30:05.026Z",
+    "bundle": {
+      "total": 0,
+      "files": {}
+    },
+    "images": {
+      "total": 1858.25,
+      "files": {
+        "clones-logo.png": 1367.166015625,
+        "clones-logo.webp": 52.232421875,
+        "taskExploration.jpg": 93.3759765625,
+        "taskExploration.webp": 78.365234375,
+        "taskRecording.jpg": 82.060546875,
+        "taskRecording.webp": 59.697265625,
+        "taskReward.jpg": 74.3818359375,
+        "taskReward.webp": 50.966796875
+      }
+    }
+  }
+}

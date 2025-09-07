@@ -1,0 +1,24 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://clones-ai.com/sitemap.xml
+
+# Block crawling of sensitive paths (if any)
+Disallow: /api/
+Disallow: /_next/
+Disallow: /assets/
+Disallow: /dist/
+
+# Allow all major search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+# Crawl delay to be respectful
+Crawl-delay: 1
