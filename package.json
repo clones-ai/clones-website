@@ -20,7 +20,9 @@
     "perf:current": "node scripts/performance-comparison.js current",
     "docker:test": "./scripts/test-docker.sh",
     "docker:dev": "docker compose --profile dev up",
-    "docker:prod": "docker compose --profile prod up"
+    "docker:prod": "docker compose --profile prod up",
+    "deploy": "npm run build && gh-pages -d dist",
+    "predeploy": "npm run build"
   },
   "dependencies": {
     "@rainbow-me/rainbowkit": "^2.1.6",

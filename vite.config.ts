@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  base: process.env.NODE_ENV === 'production' ? '/clones-website/' : '/',
   esbuild: {
     target: 'es2020',
     minify: true,
