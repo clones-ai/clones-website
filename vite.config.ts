@@ -5,9 +5,7 @@ export default defineConfig({
   plugins: [react()],
   base: process.env.NODE_ENV === 'production' ? '/clones-website/' : '/',
   esbuild: {
-    target: 'es2020',
-    minify: true,
-    treeShaking: true
+    target: 'es2020'
   },
   build: {
     target: 'es2020',
@@ -23,40 +21,13 @@ export default defineConfig({
         unknownGlobalSideEffects: false
       },
       output: {
-        manualChunks: (id) => {
-          // Vendor chunks
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor';
-            }
-            if (id.includes('framer-motion')) {
-              return 'motion';
-            }
-            if (id.includes('react-router')) {
-              return 'router';
-            }
-            if (id.includes('lucide-react')) {
-              return 'icons';
-            }
-            if (id.includes('@splinetool')) {
-              return 'spline';
-            }
-            return 'vendor';
-          }
-
-          // Split components by feature
-          if (id.includes('/components/motion/')) {
-            return 'motion-components';
-          }
-          if (id.includes('/components/forge/')) {
-            return 'forge-components';
-          }
-          if (id.includes('/components/marketplace/')) {
-            return 'marketplace-components';
-          }
-          if (id.includes('/components/metadatasets/')) {
-            return 'metadatasets-components';
-          }
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'motion': ['framer-motion'],
+          'router': ['react-router-dom'],
+          'icons': ['lucide-react'],
+          'wagmi': ['wagmi', '@rainbow-me/rainbowkit'],
+          'query': ['@tanstack/react-query']
         }
       }
     },

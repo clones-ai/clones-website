@@ -2,7 +2,7 @@
     "name": "CLONES - Create, Own, Trade AI Assets",
     "short_name": "CLONES",
     "description": "Turn your computer skills into tradeable AI assets",
-    "start_url": "/",
+    "start_url": "/clones-website/",
     "display": "standalone",
     "theme_color": "#8B5CF6",
     "orientation": "portrait-primary",
@@ -15,7 +15,7 @@
     "dir": "ltr",
     "icons": [
         {
-            "src": "/clones-logo-white.svg",
+            "src": "/clones-website/clones-logo-white.svg",
             "sizes": "any",
             "type": "image/svg+xml",
             "purpose": "any maskable"
@@ -23,13 +23,13 @@
     ],
     "screenshots": [
         {
-            "src": "/screenshot-desktop.png",
+            "src": "/clones-website/screenshot-desktop.png",
             "sizes": "1280x720",
             "type": "image/png",
             "form_factor": "wide"
         },
         {
-            "src": "/screenshot-mobile.png",
+            "src": "/clones-website/screenshot-mobile.png",
             "sizes": "390x844",
             "type": "image/png",
             "form_factor": "narrow"
@@ -40,10 +40,10 @@
             "name": "Forge",
             "short_name": "Forge",
             "description": "Create AI assets",
-            "url": "/forge",
+            "url": "/clones-website/forge",
             "icons": [
                 {
-                    "src": "/clones-logo-white.svg",
+                    "src": "/clones-website/clones-logo-white.svg",
                     "sizes": "any",
                     "type": "image/svg+xml"
                 }
@@ -53,10 +53,10 @@
             "name": "Marketplace",
             "short_name": "Market",
             "description": "Trade AI assets",
-            "url": "/marketplace",
+            "url": "/clones-website/marketplace",
             "icons": [
                 {
-                    "src": "/clones-logo-white.svg",
+                    "src": "/clones-website/clones-logo-white.svg",
                     "sizes": "any",
                     "type": "image/svg+xml"
                 }
