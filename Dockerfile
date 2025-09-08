@@ -55,10 +55,13 @@ COPY --from=build --chown=nodejs:nodejs /app/dist /app/dist
 COPY --from=build --chown=nodejs:nodejs /app/node_modules /app/node_modules
 COPY --from=build --chown=nodejs:nodejs /app/package.json /app/package.json
 
-# Health check (curl already installed in base)
+# Copy server.js
+COPY --from=build --chown=nodejs:nodejs /app/server.js /app/server.js
+
+# Health check using our /healthz endpoint
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/ || exit 1
+  CMD curl -f http://localhost:8080/healthz || exit 1
 
 # Start the server by default, this can be overwritten at runtime
-EXPOSE 3000
-CMD [ "npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "3000" ]
+EXPOSE 8080
+CMD [ "npm", "start" ]

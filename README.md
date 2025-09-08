@@ -17,6 +17,22 @@
 - Node.js 18+ (for local development)
 - Docker & Docker Compose (recommended)
 
+### Environment Setup
+**Important**: Copy the environment template before starting development:
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and fill in the required values:
+```bash
+VITE_API_URL=http://localhost:8001
+VITE_AUTH_ENDPOINT=/api/v1/wallet/connect
+VITE_DESKTOP_SCHEME=clones-dev
+VITE_WALLETCONNECT_PROJECT_ID=your-walletconnect-project-id
+VITE_BASESCAN_BASE_URL=https://sepolia.basescan.org/
+VITE_FAUCET_CONTRACT_ADDRESS=0xeD3F1269678108AB079641c4d9d59639A7047dC6
+```
+
 ### Docker Development (Recommended)
 
 #### Quick Start
@@ -40,10 +56,9 @@ docker-compose build
 - **clones-website-prod**: Production build with preview server (port 3000)
 
 #### Environment Variables
-```bash
-PUBLIC_API_URL=http://localhost:8001  # API endpoint for development
-NODE_ENV=production                   # Automatically set for prod service
-```
+Environment variables are automatically loaded from your `.env` file when using Docker.
+
+**Important**: Make sure you have created your `.env` file from `.env.example` before running Docker containers.
 
 ### Local Development (Alternative)
 ```bash
@@ -119,36 +134,25 @@ npm run preview  # Test production build locally
 - **Memory**: 2GB+ recommended for build process
 - **CDN**: Recommended for static assets
 
-### Performance Monitoring
-The application includes built-in performance monitoring:
-- Real-time Core Web Vitals tracking
-- Device capability detection
-- GPU usage optimization
-- Scroll performance monitoring
 
-## Monitoring & Analytics
+### Fly.io Deployment
 
-### Built-in Monitoring
-- **PerformanceMonitor**: Real-time metrics display (development)
-- **Core Web Vitals**: Automatic tracking and logging
-- **Error Boundaries**: Comprehensive error handling
-- **Device Detection**: Capability-based optimization
+This project is configured for deployment on Fly.io with two environments:
 
-### Production Recommendations
-- **Real User Monitoring**: Implement web-vitals tracking
-- **Error Tracking**: Sentry integration recommended
-- **Performance Budgets**: CI/CD pipeline integration
-- **A/B Testing**: UX optimization framework
+#### Automatic Deployment
 
-## Security
+- **Production**: Automatically deploys to `clones-website-prod` when pushing to the `main` branch
+- **Test**: Automatically deploys to `clones-website-test` when pushing to the `test` branch
 
-- **Zero Vulnerabilities**: All npm packages secured
-- **Content Security Policy**: Ready for implementation
-- **XSS Protection**: No innerHTML usage
-- **Supply Chain**: Local bundling, no external CDN dependencies
+#### Manual Deployment
 
-## Browser Support
+For manual deployment, ensure you have the Fly CLI installed and configured:
 
-- **Modern Browsers**: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
-- **Mobile**: iOS 14+, Android 10+
-- **Progressive Enhancement**: Graceful degradation for older browsers
+```bash
+# Deploy to test environment
+flyctl deploy -c fly.test.toml
+
+# Deploy to production environment  
+flyctl deploy -c fly.prod.toml
+```
+

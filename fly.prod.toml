@@ -3,21 +3,39 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'clones-website-prod'
-primary_region = 'cdg'
+app = 'clones-website-test'
+primary_region = 'lax'
+
+[build]
 
 [env]
-  PUBLIC_API_URL = "https://clones-backend-test.fly.dev"
+  VITE_API_URL = "https://clones-backend-prod.fly.dev"
+  VITE_AUTH_ENDPOINT = "/api/v1/wallet/connect"
+  VITE_DESKTOP_SCHEME = "clones-prod"
+  VITE_BASESCAN_BASE_URL = "https://basescan.org/"
+  VITE_FAUCET_CONTRACT_ADDRESS = "0xeD3F1269678108AB079641c4d9d59639A7047dC6"
+  # VITE_WALLETCONNECT_PROJECT_ID is set via Fly secrets (fly secrets set)
 
 [http_service]
-  internal_port = 3000
+  internal_port = 8080
   force_https = true
-  auto_stop_machines = 'suspend'
   auto_start_machines = true
-  min_machines_running = 0
-  processes = ['app']
+  auto_stop_machines = false
+  min_machines_running = 2
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "connections"
+    soft_limit = 100
+    hard_limit = 200
+
+  [[http_service.checks]]
+    interval = "5s"
+    timeout = "2s"
+    method = "GET"
+    path = "/healthz"
 
 [[vm]]
-  memory = '1gb'
-  cpu_kind = 'shared'
+  cpu_kind = "shared"
   cpus = 1
+  memory_mb = 512

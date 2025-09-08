@@ -6,18 +6,36 @@
 app = 'clones-website-test'
 primary_region = 'cdg'
 
+[build]
+
 [env]
-  PUBLIC_API_URL = "https://clones-backend-test.fly.dev"
+  VITE_API_URL = "https://clones-backend-test.fly.dev"
+  VITE_AUTH_ENDPOINT = "/api/v1/wallet/connect"
+  VITE_DESKTOP_SCHEME = "clones-dev"
+  VITE_BASESCAN_BASE_URL = "https://sepolia.basescan.org/"
+  VITE_FAUCET_CONTRACT_ADDRESS = "0xeD3F1269678108AB079641c4d9d59639A7047dC6"
+  # VITE_WALLETCONNECT_PROJECT_ID is set via Fly secrets (fly secrets set)
 
 [http_service]
-  internal_port = 3000
+  internal_port = 8080
   force_https = true
-  auto_stop_machines = 'suspend'
   auto_start_machines = true
+  auto_stop_machines = true
   min_machines_running = 0
-  processes = ['app']
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "connections"
+    soft_limit = 25
+    hard_limit = 50
+
+  [[http_service.checks]]
+    interval = "10s"
+    timeout = "2s"
+    method = "GET"
+    path = "/healthz"
 
 [[vm]]
-  memory = '1gb'
-  cpu_kind = 'shared'
+  cpu_kind = "shared"
   cpus = 1
+  memory_mb = 256
