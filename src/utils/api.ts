@@ -58,7 +58,6 @@ export async function secureFetch(endpoint: string, options: RequestInit = {}): 
   const secureHeaders = {
     'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest', // CSRF protection
-    'Cache-Control': 'no-cache', // Prevent caching of sensitive data
     ...options.headers,
   };
   

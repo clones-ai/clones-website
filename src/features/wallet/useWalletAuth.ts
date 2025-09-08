@@ -64,7 +64,7 @@ export function useWalletAuth() {
         }
 
         const clientLoading = isWalletClientLoadingRaw || !walletClient;
-        
+
         if (clientLoading) {
             return {
                 connected: true,
@@ -145,7 +145,7 @@ export function useWalletAuth() {
     const sendAuthToBackend = useCallback(
         async (payload: AuthPayload, token?: string | null) => {
             const { securePost } = await import('../../utils/api');
-            
+
             const AUTH_PATH = import.meta.env.VITE_AUTH_ENDPOINT || '/api/v1/wallet/connect';
 
             // Merge token into the payload body (required by backend schema)

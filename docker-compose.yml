@@ -18,8 +18,9 @@ services:
       - ./postcss.config.js:/app/postcss.config.js
       - ./tsconfig.json:/app/tsconfig.json
       - ./tsconfig.node.json:/app/tsconfig.node.json
+      - ./.env:/app/.env
     environment:
-      - PUBLIC_API_URL=http://localhost:8001
+      - VITE_API_URL=http://localhost:8001
 
   clones-website-prod:
     profiles:
