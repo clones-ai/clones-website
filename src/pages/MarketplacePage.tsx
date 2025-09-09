@@ -9,17 +9,16 @@ export default function MarketplacePage() {
   return (
     <div className="text-text-primary">
       <MarketplaceHero />
-      
-      <SimpleParallaxTransition variant="orbs" height="h-32" />
-      
+      <SimpleParallaxTransition variant="lines" height="h-1" />
+
       <HowItWorks />
-      
+
       <SimpleParallaxTransition variant="lines" height="h-24" />
-      
+
       <WhatYoureTrading />
-      
-      <SimpleParallaxTransition variant="gradient" height="h-32" />
-      
+
+      <SimpleParallaxTransition variant="lines" height="h-24" />
+
       <BurnPortal />
     </div>
   );

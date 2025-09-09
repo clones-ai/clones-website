@@ -48,7 +48,7 @@ export function InterfaceShowcase() {
     <>
 
 
-      <section className="py-12 md:py-20 px-4 sm:px-6 bg-transparent">
+      <section className="py-12 md:py-20 px-4 sm:px-6 bg-transparent pb-16 md:pb-24">
         <RevealUp distance={6}>
           <div className="relative mb-12">
             <div className="max-w-5xl mx-auto">
@@ -104,7 +104,7 @@ export function InterfaceShowcase() {
               {/* Enhanced Navigation Dots */}
               <RevealUp distance={3}>
                 <div className="flex justify-center items-center gap-2 md:gap-4 mb-6 md:mb-8">
-                  <div className="flex items-center gap-2 md:gap-3">
+                  <div className="flex items-center gap-2 md:gap-3 py-2">
                     {slides.map((_, index) => (
                       <button
                         key={index}
@@ -119,13 +119,13 @@ export function InterfaceShowcase() {
 
               {/* Prominent CTA */}
               <RevealUp distance={2}>
-                <div className="text-center">
+                <div className="text-center flex-shrink-0 px-8 py-4">
                   <AnimatedButton
                     variant="primary"
                     size="lg"
-                    className="text-lg md:text-xl font-sans"
+                    className="font-sans"
                   >
-                    Launch Forge App
+                    Launch Forge App <span className="text-sm">(soon)</span>
                   </AnimatedButton>
                 </div>
               </RevealUp>

@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { RevealUp } from '../motion/Reveal';
 import { AnimatedButton } from '../motion/AnimatedButton';
+import { Users, Factory, Crown, ArrowRight } from 'lucide-react';
 
 interface Role {
   id: string;
@@ -8,7 +9,11 @@ interface Role {
   description: string;
   benefits: string[];
   cta: string;
+  ctaLink: string;
   process: string;
+  icon: any;
+  color: string;
+  shadow: string;
 }
 
 const roles: Role[] = [
@@ -20,10 +25,14 @@ const roles: Role[] = [
       'Quality-based rewards',
       'Level up to access exclusive tasks',
       'Work from anywhere, at anytime',
-      'Instant crypto payment on your wallet'
+      'Instant payment on your wallet'
     ],
     cta: 'Start Recording',
-    process: 'Connect wallet → Record tasks → Earn crypto'
+    ctaLink: 'https://clones.gitbook.io/clones.docs/the-forge/roles#id-2.-farmers',
+    process: 'Connect wallet → Record tasks → Earn crypto',
+    icon: Users,
+    color: 'primary-500',
+    shadow: 'shadow-neon-primary'
   },
   {
     id: 'factory',
@@ -36,7 +45,11 @@ const roles: Role[] = [
       'Get meta-dataset allocations'
     ],
     cta: 'Create Your Factory',
-    process: 'Create factory → Fund rewards → Collect quality data → Launch IP token'
+    ctaLink: 'https://clones.gitbook.io/clones.docs/the-forge/roles#id-1.-factory-creators',
+    process: 'Create factory → Fund rewards → Collect quality data → Launch IP token',
+    icon: Factory,
+    color: 'primary-600',
+    shadow: 'shadow-neon-secondary'
   },
   {
     id: 'ambassador',
@@ -49,165 +62,183 @@ const roles: Role[] = [
       'No limits on earning potential or network size'
     ],
     cta: 'Become an Ambassador',
-    process: 'Commission Tiers'
+    ctaLink: 'https://clones.gitbook.io/clones.docs/the-forge/roles#id-3.-ambassadors',
+    process: 'Commission Tiers',
+    icon: Crown,
+    color: 'primary-700',
+    shadow: 'shadow-neon-tertiary'
   }
 ];
 
 export function RoleSelector() {
-  const [activeRole, setActiveRole] = useState<string>('farmer');
-  const [cursorStyle, setCursorStyle] = useState({ left: 0, width: 0, top: 0, height: 0 });
-  const [isMobile, setIsMobile] = useState(false);
-  const tabsRef = useRef<HTMLDivElement>(null);
-  const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
-
-  const selectedRole = roles.find(role => role.id === activeRole);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640); // sm breakpoint
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  useEffect(() => {
-    const activeTab = tabRefs.current[activeRole];
-    if (activeTab && tabsRef.current) {
-      const tabsRect = tabsRef.current.getBoundingClientRect();
-      const activeRect = activeTab.getBoundingClientRect();
-      
-      if (isMobile) {
-        // Mobile: vertical layout, use top and height
-        setCursorStyle({
-          left: 8, // padding from container
-          width: activeRect.width - 16, // full width minus padding
-          top: activeRect.top - tabsRect.top,
-          height: activeRect.height,
-        });
-      } else {
-        // Desktop: horizontal layout, use left and width
-        setCursorStyle({
-          left: activeRect.left - tabsRect.left,
-          width: activeRect.width,
-          top: 8, // padding from container
-          height: activeRect.height - 16, // full height minus padding
-        });
-      }
-    }
-  }, [activeRole, isMobile]);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
   return (
-    <section className="min-h-[80vh] md:min-h-screen flex flex-col justify-center py-12 md:py-24 px-4 sm:px-6 relative overflow-hidden">
+    <section className="py-24 px-4 sm:px-6 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto">
 
-      <div className="max-w-6xl mx-auto">
+        {/* Header */}
         <RevealUp distance={8}>
-          <div className="text-center mb-8 md:mb-16 relative z-10">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-light text-text-primary mb-4 md:mb-8 tracking-wide font-sans">Choose Your Path</h2>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-light text-text-primary mb-6 tracking-wide font-system">
+              Choose Your <span className="text-primary-500">Path</span>
+            </h2>
+
           </div>
         </RevealUp>
 
-        {/* Refined Container - Less Neon */}
-        <div className="relative z-10">
-          <div className="ultra-premium-glass-card rounded-2xl md:rounded-3xl p-4 md:p-8 w-full max-w-6xl mx-auto">
-
-            {/* Role Tabs */}
-            <RevealUp distance={6}>
-              <div className="flex justify-center mb-8">
-                <div ref={tabsRef} className="flex flex-col sm:flex-row ultra-premium-glass-card rounded-xl md:rounded-2xl p-2 relative w-full">
-                  {/* Sliding cursor */}
-                  <div
-                    className="absolute ultra-premium-glass-card border border-primary-500/40 rounded-xl transition-all duration-300 ease-out"
-                    style={{
-                      left: cursorStyle.left,
-                      width: cursorStyle.width,
-                      top: cursorStyle.top,
-                      height: cursorStyle.height,
-                    }}
-                  />
-                  {roles.map((role) => (
-                    <button
-                      key={role.id}
-                      ref={(el) => {
-                        tabRefs.current[role.id] = el;
-                      }}
-                      onClick={() => setActiveRole(role.id)}
-                      className={`px-4 sm:px-8 py-3 sm:py-4 rounded-lg md:rounded-xl text-sm font-medium transition-all duration-300 font-sans relative z-10 w-full sm:w-auto text-center ${activeRole === role.id
-                        ? 'text-primary-400'
-                        : 'text-text-tertiary hover:text-text-secondary'
-                        }`}
-                    >
-                      {role.title}
-                    </button>
-                  ))}
-                </div>
+        {/* Roles Grid - DataVault Style */}
+        <RevealUp distance={6}>
+          <div className="max-w-4xl mx-auto relative z-10">
+            <div className="ultra-premium-data-table rounded-2xl overflow-hidden">
+              {/* Table Header */}
+              <div className="grid grid-cols-2 gap-4 p-4 sm:p-6 border-b border-primary-500/30 bg-black/20 backdrop-blur-xl">
+                <div className="text-text-secondary text-sm font-medium font-system">Role</div>
+                <div className="text-text-secondary text-sm font-medium font-system text-right"></div>
               </div>
-            </RevealUp>
 
-            {/* Role Content */}
-            <RevealUp distance={4}>
-              <div className="min-h-[500px] md:h-[650px] ultra-premium-glass-card rounded-xl md:rounded-2xl p-4 md:p-8 overflow-hidden w-full">
-                <div className="h-full flex flex-col w-full">
-                  {selectedRole && (
-                    <div className="h-full flex flex-col transition-all duration-300 ease-out">
-                      <div className="text-center mb-6 flex-shrink-0">
-                        <p className="text-text-secondary max-w-4xl mx-auto text-lg md:text-xl leading-relaxed mb-6 md:mb-8 font-sans">
-                          {selectedRole.description}
-                        </p>
-                      </div>
+              {/* Role Rows */}
+              <div className="divide-y divide-primary-500/10">
+                {roles.map((role) => {
+                  const Icon = role.icon;
+                  const isSelected = selectedRole === role.id;
 
-                      <div className="mb-6 md:mb-8 flex-1 min-h-0 w-full">
-                        <div className="min-h-[300px] md:h-80 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-                          <div className="space-y-3 md:space-y-4 overflow-y-auto">
-                            {selectedRole.benefits.map((benefit, index) => (
-                              <div key={index} className="flex items-center gap-3 text-text-secondary p-3 md:p-4 ultra-premium-glass-card rounded-lg flex-shrink-0">
-                                <span className="text-green-400 text-lg md:text-xl flex-shrink-0">✅</span>
-                                <span className="font-medium font-sans text-sm md:text-base">{benefit}</span>
-                              </div>
-                            ))}
+                  return (
+                    <div key={role.id}>
+                      {/* Main Row */}
+                      <div
+                        className={`grid grid-cols-2 gap-4 p-4 sm:p-6 hover:border-l-4 transition-all duration-300 cursor-pointer backdrop-blur-sm ${role.color === 'primary-500'
+                          ? 'hover:border-l-primary-500 hover:bg-primary-500/8 hover:shadow-[inset_0_0_20px_rgba(139,92,246,0.1)]'
+                          : role.color === 'primary-600'
+                            ? 'hover:border-l-primary-600 hover:bg-primary-600/8 hover:shadow-[inset_0_0_20px_rgba(168,85,247,0.1)]'
+                            : 'hover:border-l-primary-700 hover:bg-primary-700/8 hover:shadow-[inset_0_0_20px_rgba(147,51,234,0.1)]'
+                          }`}
+                        onClick={() => setSelectedRole(isSelected ? null : role.id)}
+                      >
+                        {/* Role Info */}
+                        <div className="flex items-center gap-3 col-span-1">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${role.shadow} bg-${role.color}/25 border border-${role.color}/40`}>
+                            <Icon className={`w-6 h-6 text-${role.color}`} />
                           </div>
-
-                          <div className="ultra-premium-glass-card rounded-xl md:rounded-2xl p-4 md:p-6 flex flex-col justify-center text-center h-full">
-                            <h4 className="text-lg md:text-xl font-medium text-text-primary mb-3 md:mb-4 text-center font-sans">
-                              {selectedRole.id === 'ambassador' ? 'Commission Tiers' : 'How to get started?'}
-                            </h4>
-                            <div className="text-center">
-                              {selectedRole.id === 'ambassador' ? (
-                                <div className="space-y-1 text-xs sm:text-sm">
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-text-tertiary">0.1% $CLONES</span>
-                                    <span className="text-text-tertiary">=</span>
-                                    <span className="text-primary-400 font-bold">1% commission rate</span>
-                                  </div>
-                                  <div className="text-text-tertiary">0.2% $CLONES = <span className="text-primary-400 font-bold">2% commission rate</span></div>
-                                  <div className="text-text-tertiary">0.3% $CLONES = <span className="text-primary-400 font-bold">3% commission rate</span></div>
-                                  <div className="text-text-tertiary">0.4% $CLONES = <span className="text-primary-400 font-bold">4% commission rate</span></div>
-                                  <div className="text-text-tertiary">0.5% $CLONES = <span className="text-primary-400 font-bold">5% commission rate</span></div>
-                                  <div className="pt-1 border-t border-white/10 text-center">
-                                    <p className="text-xs text-text-muted">Higher stakes = Higher rates</p>
-                                  </div>
-                                </div>
-                              ) : (
-                                <p className="text-sm md:text-base font-medium text-primary-400 font-sans">{selectedRole.process}</p>
-                              )}
-                            </div>
+                          <div>
+                            <div className="font-medium text-text-primary font-system text-sm sm:text-base">{role.title}</div>
+                            <div className="text-text-secondary text-xs sm:text-sm font-system line-clamp-2">{role.description}</div>
                           </div>
+                        </div>
+
+                        {/* Action */}
+                        <div className="flex items-center justify-end">
+                          <button className={`px-4 py-2 rounded-lg border transition-all duration-200 text-sm font-system font-medium ${role.color === 'primary-500'
+                            ? 'border-primary-500/40 text-primary-500 hover:bg-primary-500/10'
+                            : role.color === 'primary-600'
+                              ? 'border-primary-600/40 text-primary-600 hover:bg-primary-600/10'
+                              : 'border-primary-700/40 text-primary-700 hover:bg-primary-700/10'
+                            }`}>
+                            {isSelected ? 'Collapse' : 'Explore'}
+                            <ArrowRight className={`w-4 h-4 ml-1 inline transition-transform ${isSelected ? 'rotate-90' : ''}`} />
+                          </button>
                         </div>
                       </div>
 
-                      <div className="text-center flex-shrink-0">
-                        <AnimatedButton variant="primary" size="lg" className="font-sans">
-                          {selectedRole.cta}
-                        </AnimatedButton>
-                      </div>
+                      {/* Expanded Details */}
+                      {isSelected && (
+                        <div className="p-4 sm:p-6 bg-black/30 border-t border-primary-500/20">
+                          <div className="grid md:grid-cols-2 gap-6">
+                            {/* Left Column - Description & Process/Commission */}
+                            <div className="flex flex-col">
+                              <h4 className="text-lg font-bold text-text-primary mb-3 font-system">How it works</h4>
+                              <p className="text-text-secondary mb-4 font-system flex-grow">{role.description}</p>
+
+                              {/* Process for non-Ambassador roles or Commission Tiers for Ambassador */}
+                              <div className="text-sm text-primary-500 font-system bg-primary-500/10 rounded-lg p-3 border border-primary-500/20 mt-auto">
+                                {role.id === 'ambassador' ? (
+                                  <>
+                                    <strong>Commission Tiers:</strong>
+                                    <div className="mt-2 space-y-1">
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-text-tertiary">0.1% $CLONES</span>
+                                        <span className="text-text-tertiary">=</span>
+                                        <span className="text-primary-400 font-bold">1% commission rate</span>
+                                      </div>
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-text-tertiary">0.2% $CLONES</span>
+                                        <span className="text-text-tertiary">=</span>
+                                        <span className="text-primary-400 font-bold">2% commission rate</span>
+                                      </div>
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-text-tertiary">0.3% $CLONES</span>
+                                        <span className="text-text-tertiary">=</span>
+                                        <span className="text-primary-400 font-bold">3% commission rate</span>
+                                      </div>
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-text-tertiary">0.4% $CLONES</span>
+                                        <span className="text-text-tertiary">=</span>
+                                        <span className="text-primary-400 font-bold">4% commission rate</span>
+                                      </div>
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-text-tertiary">0.5% $CLONES</span>
+                                        <span className="text-text-tertiary">=</span>
+                                        <span className="text-primary-400 font-bold">5% commission rate</span>
+                                      </div>
+                                      <div className="pt-1 border-t border-white/10 text-center">
+                                        <p className="text-xs text-text-muted">Higher stakes = Higher rates</p>
+                                      </div>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <strong>Process:</strong>
+                                    <ol className="mt-2 space-y-1">
+                                      {role.process.split(' → ').map((step, idx) => (
+                                        <li key={idx} className="flex items-start">
+                                          <span className="text-primary-400 font-bold mr-2 flex-shrink-0">{idx + 1}.</span>
+                                          <span>{step}</span>
+                                        </li>
+                                      ))}
+                                    </ol>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Right Column - Benefits & CTA */}
+                            <div className="flex flex-col">
+                              <h4 className="text-lg font-bold text-text-primary mb-3 font-system">Benefits</h4>
+                              <ul className="space-y-2 mb-6 flex-grow">
+                                {role.benefits.map((benefit, idx) => (
+                                  <li key={idx} className="flex items-center text-text-secondary text-sm font-system">
+                                    <span className="text-green-400 text-lg flex-shrink-0 mr-3">✅</span>
+                                    {benefit}
+                                  </li>
+                                ))}
+                              </ul>
+
+                              <AnimatedButton variant="primary" size="lg" className="w-full font-system mt-auto" onClick={() => window.open(role.ctaLink, '_blank', 'noopener,noreferrer')}>
+                                {role.cta}
+                              </AnimatedButton>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  );
+                })}
+              </div>
+
+              {/* Footer Stats */}
+              <div className="p-4 sm:p-6 bg-black/20 border-t border-primary-500/40 backdrop-blur-xl relative">
+                {/* Neon accent line */}
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/80 to-transparent shadow-[0_0_10px_rgba(139,92,246,0.6)]"></div>
+                <div className="text-center">
+                  <div className="text-2xl sm:text-3xl font-bold text-primary-500 font-system drop-shadow-neon-primary">
+                    Building the future of AI training data
+                  </div>
+                  <div className="text-sm text-text-muted font-system mt-1"></div>
                 </div>
               </div>
-            </RevealUp>
+            </div>
           </div>
-        </div>
+        </RevealUp>
       </div>
     </section>
   );

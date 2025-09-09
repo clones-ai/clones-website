@@ -8,6 +8,7 @@ import { PerformanceMonitor } from './components/shared/PerformanceMonitor';
 import Navigation from './components/Navigation';
 import Footer from './components/Footer';
 import WalletProvider from './features/wallet/WalletProvider';
+import SoonPage from './pages/SoonPage';
 // Lazy load pages with intelligent preloading
 const HomePage = React.lazy(() => import('./pages/HomePage'));
 const ForgePage = React.lazy(() =>
@@ -34,6 +35,9 @@ const ReferralPage = React.lazy(() =>
 const ConnectPage = React.lazy(() =>
   import(/* webpackChunkName: "connect" */ './pages/ConnectPage')
 );
+const ErrorPage = React.lazy(() =>
+  import(/* webpackChunkName: "error" */ './pages/ErrorPage')
+);
 // Preload critical routes on idle
 if ('requestIdleCallback' in window) {
   (window as any).requestIdleCallback(() => {
@@ -42,10 +46,16 @@ if ('requestIdleCallback' in window) {
   });
 }
 
+const soon = false;
+
 function App() {
   // Monitor performance metrics
   usePerformanceMonitoring();
 
+
+  if (soon) {
+    return <SoonPage />;
+  }
   return (
     <WalletProvider>
       <SmoothScroll>
@@ -60,20 +70,13 @@ function App() {
         <PerformanceMonitor showInDev={true} position="bottom-right" />
         <Router>
           <ScrollToTop />
-          <div className="min-h-screen text-text-primary pt-20 transform-gpu">
+          {/* Dedicated container for glow cloud effects */}
+          <div className="glow-cloud-container"></div>
+          <div className="min-h-screen text-text-primary pt-20">
             <Navigation />
             <ErrorBoundary>
               <main className="transform-gpu">
-                <React.Suspense fallback={
-                  <div className="min-h-screen flex items-center justify-center">
-                    <div className="ultra-premium-glass-card p-8 rounded-2xl">
-                      <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
-                        <span className="text-text-primary">Loading...</span>
-                      </div>
-                    </div>
-                  </div>
-                }>
+                <React.Suspense>
                   <Routes>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/forge" element={<ForgePage />} />
@@ -85,6 +88,7 @@ function App() {
                     <Route path="/download" element={<ReferralPage />} />
                     <Route path="/download/:referralCode" element={<ReferralPage />} />
                     <Route path="/connect" element={<ConnectPage />} />
+                    <Route path="*" element={<ErrorPage />} />
                   </Routes>
                 </React.Suspense>
               </main>

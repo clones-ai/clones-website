@@ -7,13 +7,13 @@ export default function ForgePage() {
     return (
         <div className="text-text-primary">
             <ForgeHero />
-            
-            <SimpleParallaxTransition variant="lines" height="h-32" />
-            
+
+            <SimpleParallaxTransition variant="lines" height="h-10" />
+
             <InterfaceShowcase />
-            
-            <SimpleParallaxTransition variant="gradient" height="h-24" />
-            
+
+            <SimpleParallaxTransition variant="lines" height="h-2" />
+
             <RoleSelector />
         </div>
     );

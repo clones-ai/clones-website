@@ -2,76 +2,93 @@ import { useState } from 'react';
 import { XIcon } from 'lucide-react';
 import { RevealUp } from '../components/motion/Reveal';
 import { AnimatedButton } from '../components/motion/AnimatedButton';
+import { UnifiedSpline } from '../components/shared/UnifiedSpline';
 
 export default function HomePage() {
   const [showVideoPopup, setShowVideoPopup] = useState(false);
 
   return (
-    <div className="min-h-screen overflow-hidden -mt-20">
+    <div className="min-h-screen overflow-hidden -mt-20 bg-black">
       <div className="relative h-screen">
         {/* Ultra-black background layer */}
         <div className="absolute inset-0 z-0" style={{ backgroundColor: '#000000' }}></div>
 
-        {/* 3D Background Animation - Optimisé */}
-        {/* <div className="absolute inset-0 z-10">
-          <div className="absolute inset-0 z-0" style={{ backgroundColor: '#000000' }}></div>
-          <div className="relative z-10" style={{ opacity: '1', filter: 'brightness(1) contrast(1.5)' }}>
-            <UnifiedSpline
-              url="https://prod.spline.design/BknCtcxqfZULt3ch/scene.splinecode"
-              className="w-full h-full"
-              loading="eager"
-              fallbackGradient="bg-black"
-            />
-          </div>
-        </div> */}
-
-        {/* Background Video Loop - Replaces 3D Animation */}
+        {/* Container for the animation and text */}
         <div className="absolute inset-0 z-10 flex items-center justify-center">
-          <video
-            className="w-4/5 sm:w-4/5 md:w-1/2 h-auto object-contain"
-            autoPlay
-            muted
-            loop
-            playsInline
-          >
-            <source src="/Clones_home.webm" type="video/webm" />
-            <source src="/Clones_home.mp4" type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-black/20 pointer-events-none"></div>
-        </div>
+          <div className="relative">
+            {/* Animation Spline constrained and centered */}
+            <div
+              className="relative z-0"
+              style={{
+                width: '100vw',
+                height: '100vh',
+                maxWidth: '1000px',
+                maxHeight: '1000px',
+                minWidth: '300px',
+                minHeight: '300px'
+              }}
+            >
+              <div className="absolute inset-0" style={{ backgroundColor: '#000000' }}></div>
+              <div
+                className="relative z-10 w-full h-full"
+                style={{ opacity: '1', filter: 'brightness(1) contrast(1.5)' }}
+              >
+                <UnifiedSpline
+                  url="/liquid-ring.splinecode"
+                  className="w-full h-full"
+                  loading="eager"
+                />
+              </div>
+            </div>
 
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center will-change-transform z-20 px-4">
-          <RevealUp distance={4}>
-            <h1 className="text-3xl sm:text-3xl md:text-4xl lg:text-[60px] font-light text-text-primary tracking-[1px] sm:tracking-[2px] md:tracking-[3px] select-none leading-tight py-2">
-              CLONES
-            </h1>
-          </RevealUp>
-          <RevealUp distance={3}>
-            <p className="text-xs sm:text-base md:text-base text-text-muted mt-2 md:mt-4 select-none tracking-wide font-medium max-w-sm">
-              Create. Own. Trade.
-            </p>
-          </RevealUp>
+            {/* Text overlayed on the center of the animation */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center z-20">
+              <RevealUp distance={4}>
+                <h1 className="text-3xl sm:text-3xl md:text-4xl lg:text-[60px] font-light text-text-primary tracking-[1px] sm:tracking-[2px] md:tracking-[3px] select-none leading-tight py-2">
+                  CLONES
+                </h1>
+              </RevealUp>
+              <RevealUp distance={3}>
+                <p className="text-xs sm:text-base md:text-base text-text-muted mt-2 md:mt-4 select-none tracking-wide font-medium max-w-sm">
+                  Create. Own. Trade.
+                </p>
+              </RevealUp>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Gradient transition - Background fade-out */}
+      <div
+        className="w-full"
+        style={{
+          height: '100px',
+          background: 'linear-gradient(to bottom, #000000 0%, transparent 100%)'
+        }}
+      ></div>
 
-      <div className="flex flex-col items-center justify-center px-4 sm:px-6 text-center mt-12 sm:mt-20 mb-16 sm:mb-32">
+      <div className="flex flex-col items-center justify-center px-4 sm:px-6 text-center mt-12 sm:mt-20 mb-16 sm:mb-32 h-auto">
         <RevealUp distance={4}>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-light text-text-primary mb-4 sm:mb-6 md:mb-8 tracking-tight sm:tracking-wide text-center leading-tight max-w-4xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-light text-text-primary tracking-tight sm:tracking-wide text-center leading-tight whitespace-nowrap">
             Create a million versions of yourself
           </h2>
         </RevealUp>
 
-        <RevealUp distance={3}>
-          <p className="text-lg sm:text-xl md:text-2xl text-text-muted max-w-4xl mx-auto leading-relaxed mb-8 md:mb-12 text-center font-light">
-            The First Liquid AI Data Infrastructure
-          </p>
-        </RevealUp>
+        <div className="flex-1 flex items-center justify-center my-8 md:my-12">
+          <RevealUp distance={3}>
+            <p className="text-lg sm:text-xl md:text-2xl text-text-muted max-w-4xl mx-auto leading-relaxed text-center font-light">
+              The First Liquid AI Data Infrastructure
+            </p>
+          </RevealUp>
+        </div>
 
         <RevealUp distance={2}>
           <div className="flex justify-center p-4">
             <AnimatedButton
-              onClick={() => setShowVideoPopup(true)}
+              onClick={() => {
+                setShowVideoPopup(true);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               variant="primary"
               size="lg"
               className="font-sans"
@@ -86,18 +103,20 @@ export default function HomePage() {
       {
         showVideoPopup && (
           <div
-            className="fixed z-150"
+            className="fixed z-[99999]"
             style={{
-              top: '75vh',
+              top: 0,
               left: 0,
               width: '100vw',
               height: '100vh'
             }}
             onClick={() => setShowVideoPopup(false)}
           >
+            {/* Dark overlay background */}
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-0"></div>
             {/* Video Container - True center */}
             <div
-              className="absolute bg-primary-900/40 backdrop-blur-xl rounded-xl md:rounded-2xl border border-primary-500/30 w-[90vw] sm:w-[80vw] md:w-full md:max-w-6xl"
+              className="absolute bg-primary-900/40 backdrop-blur-xl rounded-xl md:rounded-2xl border border-primary-500/30 w-[90vw] sm:w-[80vw] md:w-full md:max-w-6xl z-10"
               style={{
                 top: '50vh',
                 left: '50vw',

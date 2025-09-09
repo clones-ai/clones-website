@@ -8,12 +8,25 @@ export function MarketplaceHero() {
       {/* Background Animation - Full Screen */}
       <div className="absolute inset-0 z-0">
         <UnifiedSpline
-          url="https://prod.spline.design/fJmNtY0xLluz6eVU/scene.splinecode"
+          url="/data-transfer.splinecode"
           className="absolute inset-0"
-          style={{ opacity: '0.3' }}
+          style={{
+            opacity: '0.3',
+            minHeight: '110vh',
+            height: '110vh',
+            transform: 'scaleY(1.2)',
+            transformOrigin: 'center center'
+          }}
           loading="lazy"
-          fallbackGradient="bg-transparent"
         />
+
+        {/* Bottom fade-out gradient for smooth transition */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none z-10"
+          style={{
+            background: 'linear-gradient(to bottom, transparent 0%, rgba(12, 5, 21, 0.3) 25%, rgba(6, 2, 8, 0.6) 50%, rgba(16, 8, 25, 0.8) 75%, rgba(12, 5, 21, 1) 100%)'
+          }}
+        ></div>
       </div>
 
 

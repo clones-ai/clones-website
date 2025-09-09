@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: process.env.NODE_ENV === 'production' ? '/clones-website/' : '/',
+  base: '/',
   esbuild: {
     target: 'es2020'
   },
@@ -34,7 +34,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000
   },
   optimizeDeps: {
-    include: ['framer-motion', 'lenis', 'react', 'react-dom', 'react-router-dom'],
+    include: ['framer-motion', 'lenis', 'react', 'react-dom', 'react-router-dom', '@splinetool/viewer'],
     exclude: []
   },
   server: {

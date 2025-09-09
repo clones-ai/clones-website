@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 interface SimpleParallaxTransitionProps {
   className?: string;
-  variant?: 'orbs' | 'lines' | 'gradient';
+  variant?: 'orbs' | 'lines' | 'gradient' | 'black-to-transparent';
   height?: string;
 }
 
@@ -95,11 +95,21 @@ export function SimpleParallaxTransition({
     />
   );
 
+  const renderBlackToTransparent = () => (
+    <div
+      className="absolute inset-0"
+      style={{
+        background: 'linear-gradient(to bottom, #000000 0%, transparent 100%)'
+      }}
+    />
+  );
+
   return (
     <div ref={containerRef} className={`relative ${height} overflow-hidden ${className}`}>
       {variant === 'orbs' && renderOrbs()}
       {variant === 'lines' && renderLines()}
       {variant === 'gradient' && renderGradient()}
+      {variant === 'black-to-transparent' && renderBlackToTransparent()}
 
     </div>
   );

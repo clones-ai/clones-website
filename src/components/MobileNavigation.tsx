@@ -79,7 +79,7 @@ export function MobileNavigation({ isOpen, onToggle, onClose }: MobileNavigation
 
         {/* Mobile Menu Panel */}
         <div
-          className={`absolute top-0 right-0 w-full max-w-[85vw] sm:max-w-[320px] h-full bg-bg-primary/95 backdrop-blur-xl border-l border-primary-500/20 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'
+          className={`absolute top-0 left-1/2 transform -translate-x-1/2 w-full max-w-[85vw] sm:max-w-[320px] h-full bg-bg-primary/95 backdrop-blur-xl border border-primary-500/20 transition-all duration-300 ${isOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
             }`}
         >
           {/* Menu Header */}
@@ -144,7 +144,7 @@ export function MobileNavigation({ isOpen, onToggle, onClose }: MobileNavigation
                 target="_blank"
                 rel="noopener noreferrer"
                 className="social-icon"
-                aria-label="View Documentation"
+                aria-label="View Whitepaper"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M10.802 17.77a.703.703 0 11-.002 1.406.703.703 0 01.002-1.406m11.024-4.347a.703.703 0 11.001-1.406.703.703 0 01-.001 1.406m0-2.876a2.176 2.176 0 00-2.174 2.174c0 .233.039.465.115.691l-7.181 3.823a2.165 2.165 0 00-1.784-.937c-.829 0-1.584.475-1.95 1.216l-6.451-3.402c-.682-.358-1.192-1.48-1.192-2.48 0-1.001.51-2.123 1.192-2.481L8.85 9.397a2.176 2.176 0 003.348-1.83 2.176 2.176 0 00-2.174-2.175c-.829 0-1.584.475-1.95 1.216L1.623 9.016C.941 9.374.431 10.496.431 11.497s.51 2.123 1.192 2.481l6.451 3.402c.366.741 1.121 1.216 1.95 1.216.829 0 1.584-.475 1.95-1.216l7.181-3.823c.682-.358 1.192-1.48 1.192-2.48 0-1.001-.51-2.123-1.192-2.481l-6.451-3.402c-.366-.741-1.121-1.216-1.95-1.216-.829 0-1.584.475-1.95 1.216L1.623 6.616C.941 6.974.431 8.096.431 9.097s.51 2.123 1.192 2.481l6.451 3.402c.366.741 1.121 1.216 1.95 1.216.829 0 1.584-.475 1.95-1.216l7.181-3.823c.682-.358 1.192-1.48 1.192-2.48 0-1.001-.51-2.123-1.192-2.481l-6.451-3.402c-.366-.741-1.121-1.216-1.95-1.216z" />
@@ -189,11 +189,10 @@ export function DesktopNavigation() {
           <Link
             key={to}
             to={to}
-            className={`nav-link relative px-4 py-2 font-medium transition-all duration-200 ${
-              isActive 
-                ? 'text-purple-400' 
+            className={`nav-link relative px-4 py-2 font-medium transition-all duration-200 ${isActive
+                ? 'text-purple-400'
                 : 'text-text-secondary hover:text-text-primary'
-            }`}
+              }`}
             style={isActive ? { color: '#a855f7 !important' } : {}}
           >
             {label}

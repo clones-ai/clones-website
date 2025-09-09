@@ -3,27 +3,24 @@ export default function Footer() {
   return (
     <footer className="relative">
       <div className="border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-6 py-10 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 py-4 relative z-10">
           {/* Main Footer Content */}
-          <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-12 mb-12">
+          <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-8 mb-8">
             {/* Brand Section */}
-            <div className="space-y-">
-              <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <img
-                    src="/clones-logo-white.svg"
-                    alt="CLONES"
-                    className="h-6 sm:h-8 w-auto hover:drop-shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all duration-200"
-                  />
-                  <h3 className="text-2xl font-sans">CLONES</h3>
-                </div>
+            <div className="flex flex-col justify-between h-full">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/clones-logo-white.svg"
+                  alt="CLONES"
+                  className="h-6 sm:h-8 w-auto hover:drop-shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all duration-200"
+                />
+                <h3 className="text-2xl font-sans">CLONES</h3>
               </div>
-              <p className="text-text-tertiary text-xs italic font-mono-jetbrains">
+              <p className="text-text-tertiary text-xs italic font-mono-jetbrains text-left">
                 By the people, For the people
               </p>
-              <div className="flex items-center gap-6 text-sm text-text-tertiary mt-11">
-                <span>© CLONES 2025</span>
-                <span>All Rights Reserved</span>
+              <div className="text-sm text-text-tertiary text-left">
+                <span>© CLONES 2025<br />All Rights Reserved</span>
               </div>
             </div>
 
@@ -59,7 +56,7 @@ export default function Footer() {
               <ul className="space-y-3 text-sm">
                 <li><a href="https://clones.gitbook.io/clones.docs"
                   target="_blank"
-                  rel="noopener noreferrer" className="footer-link">Documentation</a></li>
+                  rel="noopener noreferrer" className="footer-link">Whitepaper</a></li>
                 <li><a href="/privacy-policy" className="footer-link">Privacy Policy</a></li>
                 <li><a href="/terms-conditions" className="footer-link">Terms & Conditions</a></li>
               </ul>
@@ -67,6 +64,6 @@ export default function Footer() {
           </div>
         </div>
       </div>
-    </footer>
+    </footer >
   );
 }

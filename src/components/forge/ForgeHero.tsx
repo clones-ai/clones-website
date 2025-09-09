@@ -3,7 +3,7 @@ import { ParallaxSection } from '../motion/ParallaxSection';
 
 export function ForgeHero() {
   return (
-    <section className="min-h-[70vh] sm:min-h-screen flex flex-col justify-center relative pt-8 sm:pt-12 pb-8 px-4 sm:px-6 overflow-hidden">
+    <section className="min-h-[50vh] sm:min-h-[60vh] flex flex-col justify-center relative pt-8 sm:pt-12 pb-8 px-4 sm:px-6 overflow-hidden">
 
       <div className="relative max-w-7xl mx-auto text-center flex-1 flex flex-col justify-center">
         <ParallaxSection speed={0.4} direction="up">

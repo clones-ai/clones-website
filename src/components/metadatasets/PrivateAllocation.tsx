@@ -69,7 +69,7 @@ export function PrivateAllocation() {
         </RevealUp>
 
         <RevealUp distance={6}>
-          <div className="text-center mb-12 relative z-10">
+          <div className="text-center mb-16 relative z-10">
             <p className="text-lg sm:text-xl text-text-secondary max-w-4xl mx-auto leading-relaxed font-system">
               Meta-datasets skip public bonding curves entirely, operating as exclusive private allocations followed by direct Uniswap V3 deployment.
             </p>

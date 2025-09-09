@@ -1,13 +1,24 @@
 import { RevealUp } from '../motion/Reveal';
 import { TiltCard } from '../motion/TiltCard';
+import { UnifiedSpline } from '../shared/UnifiedSpline';
 
 export function BurnPortal() {
 
   return (
     <section className="min-h-screen flex flex-col justify-center pt-4 pb-24 px-4 sm:px-6 relative overflow-hidden">
-
-      {/* Background Image - Hidden on mobile, visible on desktop */}
-      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat hidden md:block" style={{ backgroundImage: 'url(/portal-burn-bg.webp)' }}></div>
+      <div className="absolute inset-0 z-0 hidden xl:block">
+        <UnifiedSpline
+          url="/fire-particle.splinecode"
+          className="absolute inset-0"
+          style={{
+            width: '100%',
+            height: '100%',
+            opacity: '0.3',
+            willChange: 'auto'
+          }}
+          loading="lazy"
+        />
+      </div>
 
       <div className="max-w-6xl mx-auto">
         <RevealUp distance={10}>

@@ -33,17 +33,20 @@ export function MetadatasetsHero() {
       {/* Direct 3D Background Animation */}
       <div className="absolute inset-0 z-0">
         <UnifiedSpline
-          url="https://prod.spline.design/2fAIr6wJHmMqG3-7/scene.splinecode"
+          url="/particle-nebula.splinecode"
           className="absolute inset-0"
-          style={{ opacity: '0.8' }}
+          style={{
+            opacity: '0.3',
+            minHeight: '110vh',
+            height: '110vh'
+          }}
           loading="lazy"
-          fallbackGradient="bg-gradient-to-br from-black via-primary-900/10 to-black"
         />
         {/* Primary overlay - lighter */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-transparent"></div>
-        
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-transparent"></div>
+
         {/* Bottom fade-out gradient for smooth transition */}
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black via-black/60 via-black/30 to-transparent pointer-events-none z-10"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-transparent via-transparent via-transparent to-transparent pointer-events-none z-10"></div>
       </div>
 
       <div className="max-w-6xl mx-auto relative z-10">

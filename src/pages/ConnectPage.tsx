@@ -88,11 +88,11 @@ export default function ConnectPage() {
     ]);
 
     return (
-        <section className="min-h-screen flex flex-col justify-center py-24 px-4 sm:px-6 relative overflow-hidden">
+        <section className="min-h-screen flex flex-col justify-center py-6 px-4 sm:px-6 relative overflow-hidden">
             <div className="max-w-2xl mx-auto">
                 {/* Header */}
                 <RevealUp distance={8}>
-                    <div className="text-center mb-16">
+                    <div className="text-center mb-4">
                         <div className="w-20 h-20 mx-auto mb-6 ultra-premium-glass-card rounded-full flex items-center justify-center">
                             <Wallet className="w-10 h-10 text-primary-500" />
                         </div>
@@ -136,7 +136,8 @@ export default function ConnectPage() {
                                     <AnimatedButton
                                         onClick={() => setSuccess(false)}
                                         variant="secondary"
-                                        className="w-full font-system"
+                                        size="lg"
+                                        className="font-sans"
                                     >
                                         Authenticate Again
                                     </AnimatedButton>
@@ -154,16 +155,14 @@ export default function ConnectPage() {
                             <div className="text-center">
                                 {connected ? (
                                     <div className="space-y-4">
-                                        <div className={`flex items-center justify-center gap-3 px-6 py-3 ultra-premium-glass-card border rounded-full ${
-                                            ready ? 'border-green-500/30' : 'border-yellow-500/30'
-                                        }`}>
-                                            <div className={`w-2 h-2 rounded-full ${
-                                                ready ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-spin'
-                                            }`}></div>
+                                        <div className={`flex items-center justify-center gap-3 px-6 py-3 ultra-premium-glass-card border rounded-full ${ready ? 'border-green-500/30' : 'border-yellow-500/30'
+                                            }`}>
+                                            <div className={`w-2 h-2 rounded-full ${ready ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-spin'
+                                                }`}></div>
                                             <span className="text-text-primary font-medium font-system">
                                                 {status === 'reconnecting' ? 'Reconnecting Wallet…' :
-                                                 status === 'connecting' ? 'Preparing Wallet…' : 
-                                                 status === 'ready' ? 'Wallet Connected' : 'Wallet Connected'}
+                                                    status === 'connecting' ? 'Preparing Wallet…' :
+                                                        status === 'ready' ? 'Wallet Connected' : 'Wallet Connected'}
                                             </span>
                                         </div>
 

@@ -22,11 +22,6 @@
 }
 
 /* === ANIMATION UTILITIES === */
-.motion-safe {
-  transition-duration: var(--motion-duration-m);
-  transition-timing-function: var(--motion-ease-out-quad);
-  contain: layout style;
-}
 
 .motion-hover-lift {
   transition: transform var(--motion-duration-s) var(--motion-ease-out-quad),
@@ -39,23 +34,6 @@
   box-shadow: var(--shadow-lifted);
 }
 
-.motion-scale-hover {
-  transition: transform var(--motion-duration-s) var(--motion-ease-out-quad);
-  contain: layout style;
-}
-
-.motion-scale-hover:hover {
-  transform: scale(var(--motion-scale-hover));
-}
-
-.motion-glow-hover {
-  transition: box-shadow var(--motion-duration-m) var(--motion-ease-out-quad);
-  contain: layout style;
-}
-
-.motion-glow-hover:hover {
-  box-shadow: var(--shadow-glow-hover);
-}
 
 /* === PERFORMANCE OPTIMIZATIONS === */
 /* .motion-optimized removed - not used in codebase, .transform-gpu is used instead */
@@ -63,14 +41,3 @@
 /* === REDUCED MOTION === */
 /* Handled by index.css - more selective approach */
 
-/* === FOCUS STYLES === */
-.focus-ring {
-  outline: 2px solid rgba(139, 92, 246, 0.6);
-  outline-offset: 2px;
-  border-radius: 8px;
-}
-
-.focus-ring:focus-visible {
-  outline: 2px solid rgba(139, 92, 246, 0.8);
-  outline-offset: 2px;
-}

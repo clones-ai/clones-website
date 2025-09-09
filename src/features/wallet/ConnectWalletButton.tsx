@@ -1,6 +1,5 @@
 import React from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { WalletIcon } from 'lucide-react';
 
 export default function ConnectWalletButton() {
     return (

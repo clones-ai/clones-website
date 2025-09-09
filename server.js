@@ -46,7 +46,7 @@ app.use(pinoHttp({
 // Security headers
 app.use((req, res, next) => {
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; media-src 'self' https:; object-src 'none'; base-uri 'self'; frame-ancestors 'none';");
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https: http://localhost:*; frame-src 'none'; object-src 'none'; base-uri 'self';");
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -69,11 +69,44 @@ app.get('/healthz', (req, res) => {
   res.status(200).json(healthData);
 });
 
-// Serve static files
-app.use(express.static(path.join(__dirname, 'dist')));
+// Serve static files with proper MIME types
+app.use(express.static(path.join(__dirname, 'dist'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    } else if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    } else if (path.endsWith('.json')) {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    } else if (path.endsWith('.splinecode')) {
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
+    } else if (path.endsWith('.webm')) {
+      res.setHeader('Content-Type', 'video/webm');
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
+    } else if (path.endsWith('.mp4')) {
+      res.setHeader('Content-Type', 'video/mp4');
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
+    }
+  }
+}));
 
-// Handle client-side routing
+// Handle client-side routing - only for non-asset requests
 app.get('*', (req, res) => {
+  // Don't handle requests for assets
+  if (req.url.startsWith('/assets/') || 
+      req.url.endsWith('.js') || 
+      req.url.endsWith('.css') || 
+      req.url.endsWith('.json') ||
+      req.url.endsWith('.svg') ||
+      req.url.endsWith('.png') ||
+      req.url.endsWith('.ico') ||
+      req.url.endsWith('.splinecode') ||
+      req.url.endsWith('.webm') ||
+      req.url.endsWith('.mp4')) {
+    return res.status(404).send('Not found');
+  }
+  
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 

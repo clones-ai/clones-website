@@ -84,15 +84,6 @@ export function SplineErrorBoundary({ children }: { children: ReactNode }) {
         <ErrorBoundary
             fallback={
                 <div className="w-full h-[500px] flex items-center justify-center ultra-premium-glass-card rounded-2xl">
-                    <div className="text-center">
-                        <div className="text-4xl mb-4">🎨</div>
-                        <h3 className="text-xl font-semibold text-text-primary mb-2">
-                            3D Scene Unavailable
-                        </h3>
-                        <p className="text-text-secondary">
-                            The 3D experience couldn't load. This might be due to browser compatibility or graphics limitations.
-                        </p>
-                    </div>
                 </div>
             }
             onError={(error) => {

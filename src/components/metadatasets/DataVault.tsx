@@ -30,7 +30,7 @@ export function DataVault() {
     },
     {
       icon: FileText,
-      name: "Structured Text Prompts",
+      name: "Text Prompts",
       volume: "463K",
       rate: "$0.50",
       value: "$231,500",
@@ -161,7 +161,7 @@ export function DataVault() {
               </div>
 
               {/* Total Value Footer */}
-              <div className="p-4 sm:p-6 bg-black/40 border-t border-primary-500/40 backdrop-blur-xl relative">
+              <div className="p-4 sm:p-6 bg-black/20 border-t border-primary-500/40 backdrop-blur-xl relative">
                 {/* Neon accent line */}
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/80 to-transparent shadow-[0_0_10px_rgba(139,92,246,0.6)]"></div>
                 <div className="text-center">

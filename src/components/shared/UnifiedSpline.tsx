@@ -2,13 +2,18 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useDeviceCapabilities } from '../../hooks/useDeviceCapabilities';
 import { logger } from '../../utils/logger';
 
+// Global cache for Spline instances
+const splineCache = new Map<string, HTMLElement>();
+
 interface UnifiedSplineProps {
   url: string;
   className?: string;
   style?: React.CSSProperties;
-  fallbackGradient?: string;
   loading?: 'lazy' | 'eager';
   enableInteraction?: boolean;
+  bottomFade?: boolean;
+  fadeHeight?: string;
+  fadeColor?: string;
 }
 
 /**
@@ -16,13 +21,15 @@ interface UnifiedSplineProps {
  * Optimized with device capability detection and lazy loading
  * React-compatible implementation to avoid DOM conflicts
  */
-export function UnifiedSpline({ 
-  url, 
-  className = '', 
+export function UnifiedSpline({
+  url,
+  className = '',
   style = {},
-  fallbackGradient = 'bg-gradient-to-br from-gray-900/50 to-black/50',
   loading = 'lazy',
-  enableInteraction = false
+  enableInteraction = false,
+  bottomFade = false,
+  fadeHeight = '120px',
+  fadeColor = 'rgba(0, 0, 0, 1)'
 }: UnifiedSplineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -30,7 +37,7 @@ export function UnifiedSpline({
   const [hasError, setHasError] = useState(false);
   const [shouldLoad, setShouldLoad] = useState(loading === 'eager');
   const [splineElement, setSplineElement] = useState<HTMLElement | null>(null);
-  
+
   const { canRender3D, isLowEndDevice, isSlowConnection, prefersReducedMotion } = useDeviceCapabilities();
 
   // Intersection Observer for lazy loading
@@ -71,45 +78,96 @@ export function UnifiedSpline({
     setIsLoading(true);
 
     try {
-      // Load script if not already loaded
-      if (!document.querySelector('script[src*="spline-viewer"]')) {
-        const script = document.createElement('script');
-        script.type = 'module';
-        script.src = 'https://unpkg.com/@splinetool/viewer@1.10.55/build/spline-viewer.js';
-        script.async = true;
+      // Check if we have a cached instance
+      const cacheKey = `${url}-${enableInteraction}-${isLowEndDevice}`;
+      let viewer = splineCache.get(cacheKey);
+
+      if (viewer && viewer.parentNode) {
+        // Remove from current parent to avoid DOM conflicts
+        viewer.parentNode.removeChild(viewer);
+      }
+
+      if (!viewer) {
+        // Load Spline viewer dynamically
+        try {
+          await import('@splinetool/viewer');
+        } catch (error) {
+          logger.warn('Failed to load Spline viewer module:', error);
+        }
         
-        await new Promise((resolve, reject) => {
-          script.onload = resolve;
-          script.onerror = reject;
-          document.head.appendChild(script);
+        // Wait for custom element to be defined
+        await customElements.whenDefined('spline-viewer');
+
+        // Create new viewer element
+        viewer = document.createElement('spline-viewer');
+        viewer.setAttribute('url', url);
+        viewer.setAttribute('loading', loading);
+        viewer.setAttribute('loading-anim-type', 'none');
+
+        // Configure interaction based on device capabilities
+        if (enableInteraction && !isLowEndDevice) {
+          viewer.setAttribute('mouse-controls', 'true');
+          viewer.setAttribute('touch-controls', 'true');
+        } else {
+          viewer.setAttribute('mouse-controls', 'false');
+          viewer.setAttribute('touch-controls', 'false');
+        }
+
+        // Set performance-optimized styles
+        Object.assign(viewer.style, {
+          width: '100%',
+          height: '100%',
+          opacity: isLowEndDevice ? '0.7' : '0.85',
+          pointerEvents: enableInteraction ? 'auto' : 'none',
         });
+
+        // Cache the viewer instance
+        splineCache.set(cacheKey, viewer);
       }
 
-      // Wait for custom element to be defined
-      await customElements.whenDefined('spline-viewer');
+      // Force the internal canvas to fill the container properly
+      const applyCanvasStyles = () => {
+        const canvas = viewer.querySelector('canvas');
+        if (canvas) {
+          canvas.style.setProperty('width', '100%', 'important');
+          canvas.style.setProperty('height', '100%', 'important');
+          canvas.style.setProperty('object-fit', 'cover', 'important');
+          canvas.style.setProperty('object-position', 'center', 'important');
+          canvas.style.setProperty('min-width', '100%', 'important');
+          canvas.style.setProperty('min-height', '100%', 'important');
 
-      // Create viewer element
-      const viewer = document.createElement('spline-viewer');
-      viewer.setAttribute('url', url);
-      viewer.setAttribute('loading', loading);
-      viewer.setAttribute('loading-anim-type', 'none');
-      
-      // Configure interaction based on device capabilities
-      if (enableInteraction && !isLowEndDevice) {
-        viewer.setAttribute('mouse-controls', 'true');
-        viewer.setAttribute('touch-controls', 'true');
-      } else {
-        viewer.setAttribute('mouse-controls', 'false');
-        viewer.setAttribute('touch-controls', 'false');
-      }
+          // If parent container has explicit height (like 110vh), force canvas to match
+          const parent = viewer.parentElement;
+          if (parent) {
+            const computedHeight = parent.style.height || parent.style.minHeight;
+            if (computedHeight && (computedHeight.includes('vh') || computedHeight.includes('px'))) {
+              canvas.style.setProperty('height', computedHeight, 'important');
+              canvas.style.setProperty('min-height', computedHeight, 'important');
+            }
+          }
+        }
+      };
 
-      // Set performance-optimized styles
-      Object.assign(viewer.style, {
-        width: '100%',
-        height: '100%',
-        opacity: isLowEndDevice ? '0.7' : '0.85',
-        pointerEvents: enableInteraction ? 'auto' : 'none',
-      });
+      // Apply canvas styles multiple times to ensure they stick
+      setTimeout(applyCanvasStyles, 100);
+      setTimeout(applyCanvasStyles, 500);
+      setTimeout(applyCanvasStyles, 1000);
+
+      // Also try to apply when the viewer loads
+      viewer.addEventListener('load', applyCanvasStyles);
+
+      // Set up a periodic check to ensure styles remain applied
+      const styleInterval = setInterval(() => {
+        applyCanvasStyles();
+      }, 2000);
+
+      // Clean up interval when component unmounts
+      const cleanup = () => {
+        clearInterval(styleInterval);
+      };
+
+      // Store cleanup function for later use
+      (viewer as any).__cleanup = cleanup;
 
       // Setup load/error handlers
       const handleLoad = () => {
@@ -145,6 +203,11 @@ export function UnifiedSpline({
         clearTimeout(timeout);
         viewer.removeEventListener('load', handleLoad);
         viewer.removeEventListener('error', handleError);
+        viewer.removeEventListener('load', applyCanvasStyles);
+        // Clean up the style interval
+        if ((viewer as any).__cleanup) {
+          (viewer as any).__cleanup();
+        }
       };
 
     } catch (error) {
@@ -160,11 +223,12 @@ export function UnifiedSpline({
     }
   }, [shouldLoad, canRender3D, loadSplineViewer]);
 
+
   // React-safe DOM insertion
   useEffect(() => {
     if (splineElement && containerRef.current) {
       containerRef.current.appendChild(splineElement);
-      
+
       return () => {
         // React-safe cleanup
         if (splineElement && splineElement.parentNode) {
@@ -174,31 +238,23 @@ export function UnifiedSpline({
     }
   }, [splineElement]);
 
-  // Only show fallback if we really can't render or have definitive error
-  const showFallback = !canRender3D || (hasError && !isLoading && !splineElement);
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className={`relative overflow-hidden ${className}`}
       style={style}
     >
-      {showFallback && (
+
+
+      {bottomFade && (
         <div 
-          className={`absolute inset-0 flex items-center justify-center ${fallbackGradient} backdrop-blur-sm`}
-        >
-          <div className="text-center text-text-tertiary p-6 rounded-xl bg-black/20 border border-primary-500/20">
-            <div className="text-5xl mb-3 animate-pulse">⚡</div>
-            <p className="text-base font-medium mb-1">3D Experience</p>
-            <p className="text-xs opacity-70">Loading interactive content...</p>
-          </div>
-        </div>
-      )}
-      
-      {isLoading && !hasError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-          <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
-        </div>
+          className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
+          style={{
+            height: fadeHeight,
+            background: `linear-gradient(to bottom, transparent 0%, ${fadeColor}20 30%, ${fadeColor}60 70%, ${fadeColor} 100%)`
+          }}
+        />
       )}
     </div>
   );
