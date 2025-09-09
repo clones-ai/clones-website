@@ -30,11 +30,11 @@ primary_region = 'lax'
 
   [http_service.concurrency]
     type = "connections"
-    soft_limit = 25
-    hard_limit = 50
+    soft_limit = 10
+    hard_limit = 25
 
   [[http_service.checks]]
-    interval = "10s"
+    interval = "30s"
     timeout = "2s"
     method = "GET"
     path = "/healthz"
@@ -42,4 +42,4 @@ primary_region = 'lax'
 [[vm]]
   cpu_kind = "shared"
   cpus = 1
-  memory_mb = 256
+  memory_mb = 512
