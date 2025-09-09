@@ -8,11 +8,11 @@ export default function ForgePage() {
         <div className="text-text-primary">
             <ForgeHero />
 
-            <SimpleParallaxTransition variant="lines" height="h-10" />
+            <SimpleParallaxTransition variant="lines" height="h-1" />
 
             <InterfaceShowcase />
 
-            <SimpleParallaxTransition variant="lines" height="h-2" />
+            <SimpleParallaxTransition variant="lines" height="h-1" />
 
             <RoleSelector />
         </div>

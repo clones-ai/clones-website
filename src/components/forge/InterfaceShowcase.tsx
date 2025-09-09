@@ -49,6 +49,16 @@ export function InterfaceShowcase() {
 
 
       <section className="py-12 md:py-20 px-4 sm:px-6 bg-transparent pb-16 md:pb-24">
+        {/* Header */}
+        <RevealUp distance={8}>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-light text-text-primary mb-6 tracking-wide font-system">
+              The <span className="text-primary-500">Forge</span>
+            </h2>
+
+          </div>
+        </RevealUp>
+
         <RevealUp distance={6}>
           <div className="relative mb-12">
             <div className="max-w-5xl mx-auto">
@@ -132,7 +142,7 @@ export function InterfaceShowcase() {
             </div>
           </div>
         </RevealUp>
-      </section>
+      </section >
 
     </>
   );

@@ -9,7 +9,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen overflow-hidden -mt-20 bg-black">
-      <div className="relative h-screen">
+      <div className="relative h-[80vh] sm:h-[85vh]">
         {/* Ultra-black background layer */}
         <div className="absolute inset-0 z-0" style={{ backgroundColor: '#000000' }}></div>
 
@@ -21,9 +21,9 @@ export default function HomePage() {
               className="relative z-0"
               style={{
                 width: '100vw',
-                height: '100vh',
-                maxWidth: '1000px',
-                maxHeight: '1000px',
+                height: '80vh',
+                maxWidth: '800px',
+                maxHeight: '800px',
                 minWidth: '300px',
                 minHeight: '300px'
               }}
@@ -62,19 +62,19 @@ export default function HomePage() {
       <div
         className="w-full"
         style={{
-          height: '100px',
+          height: '20px',
           background: 'linear-gradient(to bottom, #000000 0%, transparent 100%)'
         }}
       ></div>
 
-      <div className="flex flex-col items-center justify-center px-4 sm:px-6 text-center mt-12 sm:mt-20 mb-16 sm:mb-32 h-auto">
+      <div className="flex flex-col items-center justify-center px-4 sm:px-6 text-center mt-2 sm:mt-4 mb-8 sm:mb-16 h-auto">
         <RevealUp distance={4}>
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-light text-text-primary tracking-tight sm:tracking-wide text-center leading-tight whitespace-nowrap">
             Create a million versions of yourself
           </h2>
         </RevealUp>
 
-        <div className="flex-1 flex items-center justify-center my-8 md:my-12">
+        <div className="flex-1 flex items-center justify-center my-4 md:my-6">
           <RevealUp distance={3}>
             <p className="text-lg sm:text-xl md:text-2xl text-text-muted max-w-4xl mx-auto leading-relaxed text-center font-light">
               The First Liquid AI Data Infrastructure
