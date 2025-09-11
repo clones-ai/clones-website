@@ -4,7 +4,7 @@
     "description": "Turn your computer skills into tradeable AI assets",
     "start_url": "/",
     "display": "standalone",
-    "theme_color": "#8B5CF6",
+    "theme_color": "#000000",
     "orientation": "portrait-primary",
     "categories": [
         "business",

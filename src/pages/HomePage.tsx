@@ -45,12 +45,14 @@ export default function HomePage() {
                 minHeight: '300px'
               }}
             >
-              <div className="absolute inset-0" style={{ backgroundColor: '#000000' }}></div>
               <div className="relative z-30 w-full h-full">
                 <UnifiedSpline
                   url="/liquid-ring.splinecode"
                   className="w-full h-full"
-                  style={{ filter: 'brightness(1.3) contrast(1.5)' }}
+                  style={{ 
+                    filter: 'brightness(1.3) contrast(1.5)',
+                    backgroundColor: 'transparent'
+                  }}
                   loading="eager"
                 />
               </div>
