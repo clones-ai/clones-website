@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { MobileNavigation, DesktopNavigation } from './MobileNavigation';
+import MobileNavigation from './MobileNavigation';
+import DesktopNavigation from './DesktopNavigation';
 import ConnectWalletButton from '../features/wallet/ConnectWalletButton';
 
 export default function Navigation() {

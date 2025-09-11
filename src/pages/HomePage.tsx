@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { XIcon } from 'lucide-react';
 import { RevealUp } from '../components/motion/Reveal';
 import { AnimatedButton } from '../components/motion/AnimatedButton';
+import { TiltCard } from '../components/motion/TiltCard';
 import { UnifiedSpline } from '../components/shared/UnifiedSpline';
 
 export default function HomePage() {
@@ -13,12 +14,28 @@ export default function HomePage() {
         {/* Ultra-black background layer */}
         <div className="absolute inset-0 z-0" style={{ backgroundColor: '#000000' }}></div>
 
-        {/* Container for the animation and text */}
+        {/* Fallback text behind animation */}
+        <div className="absolute inset-0 z-5 flex items-center justify-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <RevealUp distance={4}>
+              <h1 className="text-3xl sm:text-3xl md:text-4xl lg:text-[60px] font-light text-text-primary tracking-[1px] sm:tracking-[2px] md:tracking-[3px] select-none leading-tight py-2">
+                CLONES
+              </h1>
+            </RevealUp>
+            <RevealUp distance={3}>
+              <p className="text-xs sm:text-base md:text-base text-text-muted mt-2 md:mt-4 select-none tracking-wide font-medium max-w-sm">
+                Create. Own. Trade.
+              </p>
+            </RevealUp>
+          </div>
+        </div>
+
+        {/* Container for the animation */}
         <div className="absolute inset-0 z-10 flex items-center justify-center">
           <div className="relative">
             {/* Animation Spline constrained and centered */}
             <div
-              className="relative z-0"
+              className="relative z-20"
               style={{
                 width: '100vw',
                 height: '80vh',
@@ -29,30 +46,14 @@ export default function HomePage() {
               }}
             >
               <div className="absolute inset-0" style={{ backgroundColor: '#000000' }}></div>
-              <div
-                className="relative z-10 w-full h-full"
-                style={{ opacity: '1', filter: 'brightness(1) contrast(1.5)' }}
-              >
+              <div className="relative z-30 w-full h-full">
                 <UnifiedSpline
                   url="/liquid-ring.splinecode"
                   className="w-full h-full"
+                  style={{ filter: 'brightness(1.3) contrast(1.5)' }}
                   loading="eager"
                 />
               </div>
-            </div>
-
-            {/* Text overlayed on the center of the animation */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center z-20">
-              <RevealUp distance={4}>
-                <h1 className="text-3xl sm:text-3xl md:text-4xl lg:text-[60px] font-light text-text-primary tracking-[1px] sm:tracking-[2px] md:tracking-[3px] select-none leading-tight py-2">
-                  CLONES
-                </h1>
-              </RevealUp>
-              <RevealUp distance={3}>
-                <p className="text-xs sm:text-base md:text-base text-text-muted mt-2 md:mt-4 select-none tracking-wide font-medium max-w-sm">
-                  Create. Own. Trade.
-                </p>
-              </RevealUp>
             </div>
           </div>
         </div>
@@ -69,7 +70,7 @@ export default function HomePage() {
 
       <div className="flex flex-col items-center justify-center px-4 sm:px-6 text-center mt-2 sm:mt-4 mb-8 sm:mb-16 h-auto">
         <RevealUp distance={4}>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-light text-text-primary tracking-tight sm:tracking-wide text-center leading-tight whitespace-nowrap">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-light text-text-primary tracking-tight sm:tracking-wide text-center leading-tight sm:whitespace-nowrap">
             Create a million versions of yourself
           </h2>
         </RevealUp>
@@ -97,6 +98,33 @@ export default function HomePage() {
             </AnimatedButton>
           </div>
         </RevealUp>
+
+        <div className="mt-8 sm:mt-12 mb-8">
+          <div className="max-w-2xl mx-auto">
+            <TiltCard className="ultra-premium-glass-card rounded-2xl p-8 text-center transition-all duration-300 hover:shadow-ultra-premium-hover">
+              <RevealUp distance={4}>
+                <h3 className="text-xl font-medium text-text-primary mb-6 font-system">CLONES Token</h3>
+                <div className="bg-black/40 rounded-xl p-6 mb-6 border border-primary-500/20 group-hover:border-primary-500/40 group-hover:shadow-neon-primary transition-all duration-300">
+                  <p className="font-mono text-text-primary text-sm sm:text-base break-all leading-relaxed">
+                    CA: 0x15eB86c7E54B350bf936d916Df33AEF697202E29
+                  </p>
+                </div>
+                <a
+                  href="https://dexscreen.com/base/0x15eB86c7E54B350bf936d916Df33AEF697202E29"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-primary-500 hover:text-primary-400 transition-all duration-200 text-sm font-medium font-system group"
+                >
+                  View on DexScreen
+                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </RevealUp>
+            </TiltCard>
+          </div>
+
+        </div>
       </div>
 
       {/* Video Popup */}
