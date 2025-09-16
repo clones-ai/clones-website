@@ -21,6 +21,8 @@ services:
       - ./.env:/app/.env
     environment:
       - VITE_API_URL=http://localhost:8001
+    networks:
+      - default
 
   clones-website-prod:
     profiles:
@@ -34,3 +36,8 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+
+networks:
+  default:
+    external: true
+    name: clones-network

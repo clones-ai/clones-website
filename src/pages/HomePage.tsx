@@ -7,16 +7,42 @@ import { UnifiedSpline } from '../components/shared/UnifiedSpline';
 
 export default function HomePage() {
   const [showVideoPopup, setShowVideoPopup] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   return (
-    <div className="min-h-screen overflow-hidden -mt-20 bg-black">
+    <div className="min-h-screen overflow-x-hidden -mt-20 bg-black">
       <div className="relative h-[80vh] sm:h-[85vh]">
-        {/* Ultra-black background layer */}
         <div className="absolute inset-0 z-0" style={{ backgroundColor: '#000000' }}></div>
 
-        {/* Fallback text behind animation */}
-        <div className="absolute inset-0 z-5 flex items-center justify-center">
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+        <div className="absolute inset-0 z-10 flex items-center justify-center pt-40">
+          <div className="relative">
+            <div
+              className="
+                relative z-20
+                w-[80vw] aspect-square
+                sm:w-[100vw] sm:h-[80vh] sm:aspect-auto
+                sm:max-w-[800px] sm:max-h-[800px]
+                sm:min-w-[300px] sm:min-h-[300px]
+              "
+            >
+              <div className="relative z-30 w-full h-full">
+                <UnifiedSpline
+                  url="/scene.splinecode"
+                  className="w-full h-full"
+                  style={{
+                    filter: 'brightness(1.3) contrast(1.5) opacity(0.5)',
+                    backgroundColor: 'transparent'
+                  }}
+                  loading="eager"
+                  enableInteraction={true}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+          <div className="flex flex-col items-center justify-center text-center pointer-events-auto">
             <RevealUp distance={4}>
               <h1 className="text-3xl sm:text-3xl md:text-4xl lg:text-[60px] font-light text-text-primary tracking-[1px] sm:tracking-[2px] md:tracking-[3px] select-none leading-tight py-2">
                 CLONES
@@ -29,39 +55,8 @@ export default function HomePage() {
             </RevealUp>
           </div>
         </div>
-
-        {/* Container for the animation */}
-        <div className="absolute inset-0 z-10 flex items-center justify-center">
-          <div className="relative">
-            {/* Animation Spline constrained and centered */}
-            <div
-              className="relative z-20"
-              style={{
-                width: '100vw',
-                height: '80vh',
-                maxWidth: '800px',
-                maxHeight: '800px',
-                minWidth: '300px',
-                minHeight: '300px'
-              }}
-            >
-              <div className="relative z-30 w-full h-full">
-                <UnifiedSpline
-                  url="/liquid-ring.splinecode"
-                  className="w-full h-full"
-                  style={{ 
-                    filter: 'brightness(1.3) contrast(1.5)',
-                    backgroundColor: 'transparent'
-                  }}
-                  loading="eager"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* Gradient transition - Background fade-out */}
       <div
         className="w-full"
         style={{
@@ -107,9 +102,33 @@ export default function HomePage() {
               <RevealUp distance={4}>
                 <h3 className="text-xl font-medium text-text-primary mb-6 font-system">CLONES Token</h3>
                 <div className="bg-black/40 rounded-xl p-6 mb-6 border border-primary-500/20 group-hover:border-primary-500/40 group-hover:shadow-neon-primary transition-all duration-300">
-                  <p className="font-mono text-text-primary text-sm sm:text-base break-all leading-relaxed">
-                    CA: 0x15eB86c7E54B350bf936d916Df33AEF697202E29
-                  </p>
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="font-mono text-text-primary text-sm sm:text-base break-all leading-relaxed">
+                      CA: 0xaadd98Ad4660008C917C6FE7286Bc54b2eEF894d
+                    </span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText('0xaadd98Ad4660008C917C6FE7286Bc54b2eEF894d');
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                      className="flex-shrink-0 p-2 hover:bg-primary-500/20 rounded-lg transition-colors duration-200 relative"
+                      aria-label="Copy address"
+                    >
+                      {copied ? (
+                        <div className="flex items-center gap-1">
+                          <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span className="text-xs text-green-400 whitespace-nowrap"></span>
+                        </div>
+                      ) : (
+                        <svg className="w-4 h-4 text-text-primary hover:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <a
                   href="https://dexscreen.com/base/0x15eB86c7E54B350bf936d916Df33AEF697202E29"
@@ -125,61 +144,51 @@ export default function HomePage() {
               </RevealUp>
             </TiltCard>
           </div>
-
         </div>
       </div>
 
-      {/* Video Popup */}
-      {
-        showVideoPopup && (
+      {showVideoPopup && (
+        <div
+          className="fixed z-[99999]"
+          style={{
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh'
+          }}
+          onClick={() => setShowVideoPopup(false)}
+        >
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-0"></div>
           <div
-            className="fixed z-[99999]"
+            className="absolute bg-primary-900/40 backdrop-blur-xl rounded-xl md:rounded-2xl border border-primary-500/30 w-[90vw] sm:w-[80vw] md:w-full md:max-w-6xl z-10"
             style={{
-              top: 0,
-              left: 0,
-              width: '100vw',
-              height: '100vh'
+              top: '50vh',
+              left: '50vw',
+              transform: 'translate(-50%, -50%)'
             }}
-            onClick={() => setShowVideoPopup(false)}
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Dark overlay background */}
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-0"></div>
-            {/* Video Container - True center */}
-            <div
-              className="absolute bg-primary-900/40 backdrop-blur-xl rounded-xl md:rounded-2xl border border-primary-500/30 w-[90vw] sm:w-[80vw] md:w-full md:max-w-6xl z-10"
-              style={{
-                top: '50vh',
-                left: '50vw',
-                transform: 'translate(-50%, -50%)'
-              }}
-              onClick={(e) => e.stopPropagation()}
+            <button
+              onClick={() => setShowVideoPopup(false)}
+              className="absolute top-4 right-4 z-30 p-2 text-text-secondary hover:text-primary-500 hover:bg-black/50 rounded-lg transition-all duration-100"
             >
-              {/* Close Button */}
-              <button
-                onClick={() => setShowVideoPopup(false)}
-                className="absolute top-4 right-4 z-30 p-2 text-text-secondary hover:text-primary-500 hover:bg-black/50 rounded-lg transition-all duration-100"
+              <XIcon className="w-6 h-6" />
+            </button>
+            <div className="relative aspect-video rounded-xl md:rounded-2xl overflow-hidden p-2 md:p-0">
+              <video
+                className="w-full h-full object-cover rounded-lg md:rounded-2xl"
+                controls
+                autoPlay
+                poster="/Clones-meet-your-clone-poster.jpg"
               >
-                <XIcon className="w-6 h-6" />
-              </button>
-
-              {/* Video Content - Full Container */}
-              <div className="relative aspect-video rounded-xl md:rounded-2xl overflow-hidden p-2 md:p-0">
-                <video
-                  className="w-full h-full object-cover rounded-lg md:rounded-2xl"
-                  controls
-                  autoPlay
-                  poster="/Clones-meet-your-clone-poster.jpg"
-                >
-                  <source src="/Clones-meet-your-clone.webm" type="video/webm" />
-                  <source src="/Clones-meet-your-clone.mp4" type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-
-              </div>
+                <source src="/Clones-meet-your-clone.webm" type="video/webm" />
+                <source src="/Clones-meet-your-clone.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
             </div>
           </div>
-        )
-      }
-    </div >
+        </div>
+      )}
+    </div>
   );
 }

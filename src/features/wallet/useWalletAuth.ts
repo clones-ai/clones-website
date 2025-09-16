@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useAccount, useWalletClient, useSignMessage } from 'wagmi';
 
 /**
@@ -31,7 +31,7 @@ export type AuthPayload = {
     signature: `0x${string}`;
     timestamp: number;
     message: string;
-    ref?: string | null;
+    ref?: string;
 };
 
 export function useWalletAuth() {
@@ -42,49 +42,20 @@ export function useWalletAuth() {
     const [isSigning, setIsSigning] = useState(false);
     const signingRef = useRef(false);
 
-    // Compute unified wallet state
-    const walletState = useMemo(() => {
-        // If still reconnecting from persisted state, don't show as disconnected
-        if (isReconnecting) {
-            return {
-                connected: false,
-                ready: false,
-                loading: true,
-                status: 'reconnecting' as const
-            };
-        }
+    const connected = isConnected && !!address && !!walletClient && status === 'connected';
+    const ready = connected && !isWalletClientLoadingRaw;
+    const loading = isReconnecting || isWalletClientLoadingRaw || (isConnected && !walletClient);
 
-        if (!isConnected || status !== 'connected') {
-            return {
-                connected: false,
-                ready: false,
-                loading: false,
-                status: 'disconnected' as const
-            };
-        }
-
-        const clientLoading = isWalletClientLoadingRaw || !walletClient;
-
-        if (clientLoading) {
-            return {
-                connected: true,
-                ready: false,
-                loading: true,
-                status: 'connecting' as const
-            };
-        }
-
-        return {
-            connected: true,
-            ready: true,
-            loading: false,
-            status: 'ready' as const
-        };
-    }, [isConnected, status, isReconnecting, isWalletClientLoadingRaw, walletClient]);
+    const walletStatus = (() => {
+        if (isReconnecting) return 'reconnecting';
+        if (loading) return 'connecting';
+        if (ready) return 'ready';
+        return 'disconnected';
+    })();
 
     const isWalletReady = useCallback(() => {
-        return walletState.ready;
-    }, [walletState.ready]);
+        return ready;
+    }, [ready]);
 
     /**
      * Build the exact message to sign. Keep formatting stable for backend verification.
@@ -128,7 +99,7 @@ export function useWalletAuth() {
                     signature,
                     timestamp: ts,
                     message,
-                    ref,
+                    ref: ref ?? undefined,
                 };
             } finally {
                 signingRef.current = false;
@@ -139,22 +110,22 @@ export function useWalletAuth() {
     );
 
     /**
-     * Send the signed payload to your backend with HTTPS enforcement.
-     * Defaults to `${VITE_API_URL}/api/v1/wallet/connect` unless VITE_AUTH_ENDPOINT overrides it.
+     * Send the signed payload to your backend using AuthManager
+     * Uses bootstrap call (NO CSRF) for initial authentication
      */
     const sendAuthToBackend = useCallback(
         async (payload: AuthPayload, token?: string | null) => {
-            const { securePost } = await import('../../utils/api');
-
-            const AUTH_PATH = import.meta.env.VITE_AUTH_ENDPOINT || '/api/v1/wallet/connect';
+            const { AuthManager } = await import('../auth');
 
             // Merge token into the payload body (required by backend schema)
-            const body = {
+            const authData = {
                 ...payload,
                 ...(token ? { token } : {}),
             };
 
-            return securePost(AUTH_PATH, body);
+            // Use AuthManager for proper session management
+            const authManager = AuthManager.getInstance();
+            await authManager.authenticateWithWallet(authData);
         },
         []
     );
@@ -165,16 +136,15 @@ export function useWalletAuth() {
         authenticateWallet,
         sendAuthToBackend,
 
-        // unified state
-        connected: walletState.connected,
-        ready: walletState.ready,
-        loading: walletState.loading,
-        status: walletState.status,
+        connected,
+        ready,
+        loading,
+        status: walletStatus,
         address,
         isSigning,
 
         // legacy compatibility
-        isWalletClientLoading: walletState.loading,
+        isWalletClientLoading: loading,
         isWalletReady,
     };
 }

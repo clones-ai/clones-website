@@ -1,4 +1,4 @@
-// Centralized exports so the rest of the app can import from 'features/wallet'
+// Centralized exports for wallet functionality
 export { default as WalletProvider } from './WalletProvider';
 export { default as ConnectWalletButton } from './ConnectWalletButton';
 export { useWalletAuth } from './useWalletAuth';

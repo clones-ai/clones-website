@@ -7,13 +7,13 @@ export function PrivateAllocation() {
     {
       icon: Users,
       title: "$CLONES Stakers",
-      allocation: "60% Allocation (600M Tokens)",
+      allocation: "25% Allocation (250M Tokens)",
       color: "primary-500",
       shadow: "shadow-neon-primary",
       details: [
         { label: "Access Method:", value: "Private contribution" },
         { label: "Window:", value: "48-hour exclusive" },
-        { label: "Limit:", value: "Stake percentage × 600M" }
+        { label: "Limit:", value: "Stake percentage × 250M" }
       ],
       reveal: RevealLeft
     },
@@ -33,7 +33,7 @@ export function PrivateAllocation() {
     {
       icon: Lock,
       title: "IP Holders",
-      allocation: "10% Allocation (100M Tokens)",
+      allocation: "5% Allocation (50M Tokens)",
       color: "primary-700",
       shadow: "shadow-neon-tertiary",
       details: [
@@ -46,7 +46,7 @@ export function PrivateAllocation() {
     {
       icon: BarChart3,
       title: "Liquidity Pool",
-      allocation: "10% Allocation (50M Tokens)",
+      allocation: "50% Allocation (500M Tokens)",
       color: "green-500",
       shadow: "shadow-neon-success",
       details: [
@@ -85,31 +85,31 @@ export function PrivateAllocation() {
                 <RevealComponent distance={6 + index}>
                   <div className="flex items-center gap-4 mb-6">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${allocation.shadow} ${allocation.color === 'green-500'
-                        ? 'bg-green-500/20 border border-green-500/40'
-                        : allocation.color === 'primary-500'
-                          ? 'bg-primary-500/25 border border-primary-500/40'
-                          : allocation.color === 'primary-600'
-                            ? 'bg-primary-600/25 border border-primary-600/40'
-                            : 'bg-primary-700/25 border border-primary-700/40'
+                      ? 'bg-green-500/20 border border-green-500/40'
+                      : allocation.color === 'primary-500'
+                        ? 'bg-primary-500/25 border border-primary-500/40'
+                        : allocation.color === 'primary-600'
+                          ? 'bg-primary-600/25 border border-primary-600/40'
+                          : 'bg-primary-700/25 border border-primary-700/40'
                       }`}>
                       <Icon className={`w-6 h-6 ${allocation.color === 'green-500'
-                          ? 'text-green-500'
-                          : allocation.color === 'primary-500'
-                            ? 'text-primary-500'
-                            : allocation.color === 'primary-600'
-                              ? 'text-primary-600'
-                              : 'text-primary-700'
+                        ? 'text-green-500'
+                        : allocation.color === 'primary-500'
+                          ? 'text-primary-500'
+                          : allocation.color === 'primary-600'
+                            ? 'text-primary-600'
+                            : 'text-primary-700'
                         }`} />
                     </div>
                     <div>
                       <h3 className="text-xl font-medium text-text-primary font-system">{allocation.title}</h3>
                       <p className={`text-sm font-system ${allocation.color === 'green-500'
-                          ? 'text-green-500'
-                          : allocation.color === 'primary-500'
-                            ? 'text-primary-500'
-                            : allocation.color === 'primary-600'
-                              ? 'text-primary-600'
-                              : 'text-primary-700'
+                        ? 'text-green-500'
+                        : allocation.color === 'primary-500'
+                          ? 'text-primary-500'
+                          : allocation.color === 'primary-600'
+                            ? 'text-primary-600'
+                            : 'text-primary-700'
                         }`}>{allocation.allocation}</p>
                     </div>
                   </div>

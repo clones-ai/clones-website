@@ -1,7 +1,10 @@
 import React from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount } from 'wagmi';
 
 export default function ConnectWalletButton() {
+    const { isConnected, isConnecting, isReconnecting } = useAccount();
+    
     return (
         <ConnectButton.Custom>
             {({
@@ -14,11 +17,8 @@ export default function ConnectWalletButton() {
                 mounted,
             }) => {
                 const ready = mounted && authenticationStatus !== 'loading';
-                const connected =
-                    ready &&
-                    account &&
-                    chain &&
-                    (!authenticationStatus || authenticationStatus === 'authenticated');
+                
+                const connected = isConnected && ready && account && chain;
 
                 return (
                     <div
@@ -32,6 +32,18 @@ export default function ConnectWalletButton() {
                         })}
                     >
                         {(() => {
+                            if (isConnecting || isReconnecting) {
+                                return (
+                                    <button
+                                        disabled
+                                        type="button"
+                                        className="bg-[#8B5CF6]/70 text-white rounded-full px-6 py-2 font-medium cursor-not-allowed"
+                                    >
+                                        {isReconnecting ? 'Reconnecting...' : 'Connecting...'}
+                                    </button>
+                                );
+                            }
+
                             if (!connected) {
                                 return (
                                     <div className="flex items-center gap-2">

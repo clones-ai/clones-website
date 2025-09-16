@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Droplets, Clock, Shield, AlertCircle, CheckCircle, Copy, ExternalLink } from 'lucide-react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
-import { useWalletAuth } from '../wallet';
 import { parseEther } from 'viem';
 import { RevealUp } from '../../components/motion/Reveal';
 import { AnimatedButton } from '../../components/motion/AnimatedButton';
@@ -56,8 +55,7 @@ interface FaucetStatus {
 }
 
 export default function FaucetPage() {
-  const { address } = useAccount();
-  const { connected } = useWalletAuth();
+  const { address, isConnected } = useAccount();
 
   const [faucetStatus, setFaucetStatus] = useState<FaucetStatus | null>(null);
   const [loading, setLoading] = useState(false);
@@ -117,7 +115,7 @@ export default function FaucetPage() {
 
   // Handle claim tokens
   const claimTokens = useCallback(async () => {
-    if (!connected || !address || !faucetStatus?.canClaim) return;
+    if (!isConnected || !address || !faucetStatus?.canClaim) return;
 
     setLoading(true);
     setError(null);
@@ -132,7 +130,7 @@ export default function FaucetPage() {
       setError(err instanceof Error ? err.message : 'Failed to claim tokens');
       setLoading(false);
     }
-  }, [connected, address, faucetStatus, writeContract]);
+  }, [isConnected, address, faucetStatus, writeContract]);
 
   // Handle transaction updates
   useEffect(() => {
@@ -178,7 +176,7 @@ export default function FaucetPage() {
     return `${minutes}m remaining`;
   };
 
-  if (!connected || !address) {
+  if (!isConnected || !address) {
     return (
       <div className="min-h-screen flex flex-col justify-center py-24 px-4 sm:px-6 relative overflow-hidden">
         <div className="max-w-2xl mx-auto text-center">

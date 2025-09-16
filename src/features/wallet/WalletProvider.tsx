@@ -1,12 +1,19 @@
 import React from 'react';
-import { WagmiProvider } from 'wagmi';
+import { WagmiProvider, createConfig, http } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
     RainbowKitProvider,
-    getDefaultConfig,
     lightTheme,
+    connectorsForWallets,
 } from '@rainbow-me/rainbowkit';
+import {
+    injectedWallet,
+    walletConnectWallet,
+    coinbaseWallet,
+    metaMaskWallet,
+} from '@rainbow-me/rainbowkit/wallets';
 import { base, baseSepolia } from 'wagmi/chains';
+import { AuthProvider } from '../auth/AuthProvider';
 
 // Import RainbowKit styles once
 import '@rainbow-me/rainbowkit/styles.css';
@@ -16,16 +23,35 @@ interface WalletProviderProps {
 }
 
 /**
- * Build wagmi config for Base + Base Sepolia.
- * We keep SSR disabled and enable autoConnect with proper error handling.
+ * Build wagmi config for Base + Base Sepolia with explicit connectors.
+ * This approach avoids getDefaultConfig compatibility issues.
  */
-const config = getDefaultConfig({
-    appName: 'Clones Desktop',
-    projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo-project-id',
+const connectors = connectorsForWallets(
+    [
+        {
+            groupName: 'Recommended',
+            wallets: [
+                metaMaskWallet,
+                injectedWallet,
+                coinbaseWallet,
+                walletConnectWallet,
+            ],
+        },
+    ],
+    {
+        appName: 'Clones Desktop',
+        projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo-project-id',
+    }
+);
+
+const config = createConfig({
+    connectors,
     chains: [base, baseSepolia],
+    transports: {
+        [base.id]: http(),
+        [baseSepolia.id]: http(),
+    },
     ssr: false,
-    // RainbowKit enables autoConnect via connectors under the hood.
-    // With getDefaultConfig v2, autoConnect is true by default.
 });
 
 const queryClient = new QueryClient({
@@ -52,7 +78,9 @@ export default function WalletProvider({ children }: WalletProviderProps) {
                         overlayBlur: 'small',
                     })}
                 >
-                    {children}
+                    <AuthProvider>
+                        {children}
+                    </AuthProvider>
                 </RainbowKitProvider>
             </QueryClientProvider>
         </WagmiProvider>

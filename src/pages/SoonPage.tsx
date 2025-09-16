@@ -1,28 +1,54 @@
 import { RevealUp } from '../components/motion/Reveal';
+import Footer from '../components/Footer';
+import { UnifiedSpline } from '../components/shared/UnifiedSpline';
+
+
 
 export default function SoonPage() {
 
   return (
-    <div className="min-h-screen overflow-hidden -mt-20 bg-black">
-      <div className="relative h-screen">
+    <div className="min-h-screen flex flex-col bg-black">
+      <div className="relative flex-grow">
         {/* Ultra-black background layer */}
         <div className="absolute inset-0 z-0" style={{ backgroundColor: '#000000' }}></div>
 
-        {/* 3D Background Animation - Optimisé */}
-        {/* <div className="absolute inset-0 z-10">
-          <div className="absolute inset-0 z-0" style={{ backgroundColor: '#000000' }}></div>
-          <div className="relative z-10" style={{ opacity: '1', filter: 'brightness(1) contrast(1.5)' }}>
-            <UnifiedSpline
-              url="https://prod.spline.design/BknCtcxqfZULt3ch/scene.splinecode"
-              className="w-full h-full"
-              loading="eager"
-              fallbackGradient="bg-black"
-            />
+        {/* 3D Background Spline */}
+        <div className="absolute inset-0 z-10 flex items-center justify-center pt-40">
+          <div className="relative">
+            <div
+              className="
+                relative z-20
+                w-[80vw] aspect-square
+                sm:w-[100vw] sm:h-[80vh] sm:aspect-auto
+                sm:max-w-[800px] sm:max-h-[800px]
+                sm:min-w-[300px] sm:min-h-[300px]
+              "
+            >
+              <div
+                className="relative z-30 w-full h-full will-change-transform"
+                style={{
+                  transform: `scale(1)`,
+                  transformOrigin: '50% 50%'
+                }}
+              >
+                <UnifiedSpline
+                  url="/scene.splinecode"
+                  className="w-full h-full"
+                  style={{
+                    filter: 'brightness(1.3) contrast(1.5) opacity(0.5)',
+                    backgroundColor: 'transparent'
+                  }}
+                  loading="eager"
+                  enableInteraction={true}
+                />
+              </div>
+            </div>
           </div>
-        </div> */}
+        </div>
+
 
         {/* Background Video Loop - Replaces 3D Animation */}
-        <div className="absolute inset-0 z-10 flex items-center justify-center">
+        {/* <div className="absolute inset-0 z-10 flex items-center justify-center">
           <video
             className="w-4/5 sm:w-4/5 md:w-1/2 h-auto object-contain"
             autoPlay
@@ -34,7 +60,7 @@ export default function SoonPage() {
             <source src="/Clones_home.mp4" type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-black/20 pointer-events-none"></div>
-        </div>
+        </div> */}
 
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center will-change-transform z-20 px-4">
           <RevealUp distance={4}>
@@ -50,6 +76,7 @@ export default function SoonPage() {
         </div>
       </div>
 
+      <Footer platformLinksMode="soon" isHomePage={true} />
     </div >
   );
 }

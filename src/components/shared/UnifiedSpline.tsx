@@ -94,7 +94,7 @@ export function UnifiedSpline({
         } catch (error) {
           logger.warn('Failed to load Spline viewer module:', error);
         }
-        
+
         // Wait for custom element to be defined
         await customElements.whenDefined('spline-viewer');
 
@@ -248,7 +248,7 @@ export function UnifiedSpline({
 
 
       {bottomFade && (
-        <div 
+        <div
           className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
           style={{
             height: fadeHeight,
@@ -258,4 +258,4 @@ export function UnifiedSpline({
       )}
     </div>
   );
-}
+} 

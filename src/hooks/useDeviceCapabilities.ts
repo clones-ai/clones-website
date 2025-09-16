@@ -61,13 +61,10 @@ export function useDeviceCapabilities(): DeviceCapabilities {
       const verySlowConnection = connection && 
         (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g');
       
-      // Disable 3D on most mobile devices for performance
+      // Only disable 3D on very low-end devices
       const shouldDisable3DOnMobile = isMobile && (
-        isLowEndDevice || 
-        hasLowMemory || 
-        screenWidth < 768 || // Small screens
-        veryLowMemory ||
-        verySlowConnection
+        veryLowMemory || // Only disable if memory < 3GB
+        verySlowConnection // Only disable on very slow connections
       );
 
       const canRender3D = hasWebGL &&

@@ -55,7 +55,7 @@ const soon = false;
 function AppContent() {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
-  
+
   return (
     <div className="min-h-screen text-text-primary pt-20">
       <Navigation />

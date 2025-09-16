@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Wallet, Shield, Zap } from 'lucide-react';
 import { useWalletAuth } from '../features/wallet';
+import { useAccount } from 'wagmi';
 import { useWalletName } from '../features/wallet/useWalletName';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { RevealUp } from '../components/motion/Reveal';
@@ -15,11 +16,14 @@ export default function ConnectPage() {
     const [success, setSuccess] = useState(false);
 
     const { openConnectModal } = useConnectModal();
-    const { authenticateWallet, sendAuthToBackend, connected, ready, loading, status } = useWalletAuth();
+    const { authenticateWallet, sendAuthToBackend, ready } = useWalletAuth();
+    const { isConnected, isReconnecting } = useAccount();
     const walletName = useWalletName();
 
     const token = searchParams.get('token') || '';
     const refCode = searchParams.get('ref');
+    const fromPage = searchParams.get('from');
+    const sessionId = searchParams.get('sessionId');
 
     // Latch to prevent duplicate auto-auth attempts
     const autoAuthStarted = useRef(false);
@@ -29,7 +33,7 @@ export default function ConnectPage() {
             setConnecting(true);
             setError(null);
 
-            if (!connected) {
+            if (!isConnected) {
                 throw new Error('Wallet not connected. Please connect your wallet first.');
             }
 
@@ -40,13 +44,18 @@ export default function ConnectPage() {
             const authData = await authenticateWallet(refCode);
             await sendAuthToBackend(authData, token);
 
+            // AuthManager handles session initialization automatically in sendAuthToBackend
             setSuccess(true);
             setError(null);
 
-            // optional UX: redirect after a short delay
+            // Redirect based on where user came from
             setTimeout(() => {
-                navigate('/');
-            }, 3000);
+                if (fromPage === 'transaction' && sessionId) {
+                    navigate(`/wallet/transaction?sessionId=${sessionId}`);
+                } else {
+                    navigate('/');
+                }
+            }, 2000);
         } catch (err: unknown) {
             console.error(err);
             const message = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -54,20 +63,20 @@ export default function ConnectPage() {
         } finally {
             setConnecting(false);
         }
-    }, [connected, ready, authenticateWallet, refCode, sendAuthToBackend, token, navigate]);
+    }, [isConnected, ready, authenticateWallet, refCode, sendAuthToBackend, token, navigate, fromPage, sessionId]);
 
     // If token is present and we are NOT connected (and not reconnecting), open the wallet modal automatically.
     useEffect(() => {
-        if (token && !connected && !loading && openConnectModal && status === 'disconnected') {
+        if (token && !isConnected && !isReconnecting && openConnectModal) {
             openConnectModal();
         }
-    }, [token, connected, loading, openConnectModal, status]);
+    }, [token, isConnected, isReconnecting, openConnectModal]);
 
     // Single auto-auth effect: run once when wallet becomes truly ready
     useEffect(() => {
         if (
             token &&
-            connected &&
+            isConnected &&
             ready &&
             !connecting &&
             !success &&
@@ -79,7 +88,7 @@ export default function ConnectPage() {
         }
     }, [
         token,
-        connected,
+        isConnected,
         ready,
         connecting,
         success,
@@ -98,10 +107,10 @@ export default function ConnectPage() {
                         </div>
 
                         <h1 className="text-4xl md:text-5xl font-light text-text-primary mb-6 tracking-wide font-system">
-                            {connected ? 'Authenticate Wallet' : 'Connect Your Wallet'}
+                            {isConnected ? 'Authenticate Wallet' : 'Connect Your Wallet'}
                         </h1>
                         <p className="text-text-secondary text-lg leading-relaxed max-w-xl mx-auto">
-                            {connected
+                            {isConnected
                                 ? `Sign a message with your ${walletName} to authenticate with Clones Desktop`
                                 : 'Connect your Ethereum wallet (MetaMask, Coinbase Wallet, Rabby, etc.) to access Clones Desktop'}
                         </p>
@@ -153,16 +162,15 @@ export default function ConnectPage() {
                             </div>
                         ) : (
                             <div className="text-center">
-                                {connected ? (
+                                {isConnected ? (
                                     <div className="space-y-4">
                                         <div className={`flex items-center justify-center gap-3 px-6 py-3 ultra-premium-glass-card border rounded-full ${ready ? 'border-green-500/30' : 'border-yellow-500/30'
                                             }`}>
                                             <div className={`w-2 h-2 rounded-full ${ready ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-spin'
                                                 }`}></div>
                                             <span className="text-text-primary font-medium font-system">
-                                                {status === 'reconnecting' ? 'Reconnecting Wallet…' :
-                                                    status === 'connecting' ? 'Preparing Wallet…' :
-                                                        status === 'ready' ? 'Wallet Connected' : 'Wallet Connected'}
+                                                {isReconnecting ? 'Reconnecting Wallet…' :
+                                                    ready ? 'Wallet Connected' : 'Preparing Wallet…'}
                                             </span>
                                         </div>
 
@@ -171,11 +179,11 @@ export default function ConnectPage() {
                                             disabled={connecting || !ready}
                                             variant="primary"
                                             icon={Shield}
-                                            loading={connecting || loading}
+                                            loading={connecting}
                                             className="w-full font-system"
                                         >
-                                            {connecting || loading
-                                                ? (connecting ? 'Authenticating…' : 'Preparing Wallet…')
+                                            {connecting
+                                                ? 'Authenticating…'
                                                 : 'Sign Message & Authenticate'
                                             }
                                         </AnimatedButton>

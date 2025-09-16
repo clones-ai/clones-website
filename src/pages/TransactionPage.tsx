@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Wallet, Shield, Zap, ArrowRight, AlertCircle, CheckCircle, ExternalLink } from 'lucide-react';
-import { useWalletAuth } from '../features/wallet';
+import { useAuth } from '../features/auth';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSimulateContract, useReadContract } from 'wagmi';
 import { parseEther, type Abi } from 'viem';
 import { RevealUp } from '../components/motion/Reveal';
@@ -50,7 +50,8 @@ export default function TransactionPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { address } = useAccount();
-  const { connected } = useWalletAuth();
+  const { isConnected } = useAccount();
+  const { isAuthenticated, authManager } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [userError, setUserError] = useState<UserFacingError | null>(null);
@@ -62,14 +63,19 @@ export default function TransactionPage() {
   const [needsApproval, setNeedsApproval] = useState(false);
   const [allowanceChecked, setAllowanceChecked] = useState(false); // Track if allowance check is done
   const [isApproving, setIsApproving] = useState(false);
+  const [isAutoAuthenticating, setIsAutoAuthenticating] = useState(false); // Track auto-authentication
 
   const { writeContract, data: writeData, isPending: isWritePending, error: writeError } = useWriteContract();
 
   // Hook for approval write
   const { writeContract: writeApproval, data: approvalData, isPending: isApprovalPending } = useWriteContract();
 
-  // Wait for approval confirmation
-  const { isSuccess: isApprovalConfirmed, isLoading: isApprovalConfirming } = useWaitForTransactionReceipt({
+  const {
+    isSuccess: isApprovalConfirmed,
+    isLoading: isApprovalConfirming,
+    isError: isApprovalError,
+    error: approvalReceiptError
+  } = useWaitForTransactionReceipt({
     hash: approvalData,
   });
 
@@ -133,18 +139,66 @@ export default function TransactionPage() {
     if (!sessionData) return;
 
     try {
-      const { securePost } = await import('../utils/api');
-      await securePost('/api/v1/transaction/complete', {
-        sessionId: sessionData.sessionId,
-        status,
-        txHash,
-        error
+      const response = await authManager.secureCall('/api/v1/transaction/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: sessionData.sessionId,
+          status,
+          txHash,
+          error
+        })
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to complete transaction');
+      }
     } catch (err) {
       console.error('Failed to update session status:', err);
     }
-  }, [sessionData]);
+  }, [sessionData, authManager]);
 
+
+  // Auto-authenticate with sessionId if present and not authenticated
+  useEffect(() => {
+    const sessionId = searchParams.get('sessionId');
+
+    if (sessionId && !isAuthenticated && !isAutoAuthenticating) {
+      const autoAuth = async () => {
+        console.log('🔐 Auto-authenticating with sessionId:', sessionId);
+        setIsAutoAuthenticating(true);
+        try {
+          const response = await fetch('/api/v1/wallet/establish-session-from-transaction', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'include', // Important for cookies/sessions
+            body: JSON.stringify({ sessionId })
+          });
+          const data = await response.json();
+          if (data.success) {
+            console.log('✅ Auto-authentication successful:', data.data);
+            // Force auth manager to refresh state and wait for it
+            // Only call initialize if not already authenticated
+            if (!authManager.getState().isAuthenticated) {
+              await authManager.initialize();
+            } else {
+              console.log('🔄 AuthManager already authenticated, skipping initialize()');
+            }
+          } else {
+            console.error('❌ Auto-authentication failed:', data.error);
+          }
+        } catch (error) {
+          console.error('❌ Auto-authentication error:', error);
+        } finally {
+          setIsAutoAuthenticating(false);
+        }
+      };
+      autoAuth();
+    }
+  }, [searchParams, authManager, isAutoAuthenticating, isAuthenticated]);
 
   // Load transaction session from URL, then prepare transaction for simulation
   useEffect(() => {
@@ -156,16 +210,22 @@ export default function TransactionPage() {
       return;
     }
 
+    if (!isAuthenticated) {
+      // Still waiting for authentication to complete
+      setLoading(true);
+      return;
+    }
+
     // 1. Fetch session details from backend
     const fetchSessionAndPrepareTx = async () => {
       setLoading(true);
       setUserError(null);
 
       try {
-        const { secureGet } = await import('../utils/api');
+        const { secureGet } = await import('../utils/secureApi');
         const sessionJson = await secureGet(`/api/v1/transaction/session?sessionId=${sessionId}`);
 
-        const session: TransactionSession = sessionJson.data;
+        const session: TransactionSession = (sessionJson as { data: TransactionSession }).data;
 
         if (session.isExpired) {
           setUserError({ title: 'Session Expired', message: 'Transaction session has expired. Please try again from the desktop app.', code: 'E_SESSION_EXPIRED', category: 'unknown' });
@@ -176,16 +236,24 @@ export default function TransactionPage() {
         setSessionData(session);
 
         // 2. Get contract call data from backend
-        const { securePost } = await import('../utils/api');
-        const prepareData = await securePost('/api/v1/transaction/prepare-tx', {
-          type: session.transactionType,
-          sessionToken: session.sessionToken,
-          creator: session.transactionParams.creator,
-          token: session.transactionParams.token,
-          amount: session.transactionParams.amount,
-          poolAddress: session.transactionParams.poolAddress,
+        const response = await authManager.secureCall('/api/v1/transaction/prepare-tx', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: session.transactionType,
+            sessionToken: session.sessionToken,
+            creator: session.transactionParams.creator,
+            token: session.transactionParams.token,
+            amount: session.transactionParams.amount,
+            poolAddress: session.transactionParams.poolAddress,
+          })
         });
 
+        if (!response.ok) {
+          throw new Error('Failed to prepare transaction');
+        }
+
+        const prepareData = await response.json();
         setPreparedTx(prepareData.data);
         setValidated(true);
 
@@ -198,7 +266,7 @@ export default function TransactionPage() {
     };
 
     fetchSessionAndPrepareTx();
-  }, [searchParams]);
+  }, [searchParams, authManager, isAuthenticated]);
 
   // 3. Simulate the transaction to catch errors before sending
   const {
@@ -227,82 +295,90 @@ export default function TransactionPage() {
     }
   }, [isSimulating, simulationError, isSimulationSuccess, preparedTx]);
 
-  // Check if approval is needed for fund operations
   useEffect(() => {
-    if ((sessionData?.transactionType === 'fundPool' || sessionData?.transactionType === 'createAndFundFactory') && !isAllowanceLoading && allowance !== undefined && sessionData.transactionParams.amount) {
+    const requiresApprovalCheck = sessionData?.transactionType === 'fundPool' || sessionData?.transactionType === 'createAndFundFactory';
+
+    if (!requiresApprovalCheck) {
+      setNeedsApproval(false);
+      setAllowanceChecked(true);
+      return;
+    }
+
+    if (isAllowanceLoading || allowance === undefined || !sessionData.transactionParams.amount) {
+      // Still loading or missing data
+      return;
+    }
+
+    try {
       const requiredAmount = parseEther(sessionData.transactionParams.amount);
       const currentAllowance = allowance as bigint;
       const needsApprovalValue = currentAllowance < requiredAmount;
 
-      // Debug logging
-      console.log('Allowance Debug:', {
-        token: sessionData.transactionParams.token,
-        spender: preparedTx?.contractAddress,
-        currentAllowance: currentAllowance.toString(),
-        requiredAmount: requiredAmount.toString(),
-        needsApproval: needsApprovalValue,
-        owner: address
-      });
 
       setNeedsApproval(needsApprovalValue);
       setAllowanceChecked(true);
-    } else {
-      console.log('Skipping allowance check:', {
-        transactionType: sessionData?.transactionType,
-        allowanceLoaded: allowance !== undefined,
-        isAllowanceLoading,
-        hasAmount: !!sessionData?.transactionParams.amount
+    } catch (error) {
+      console.error('Error checking allowance:', error);
+      setUserError({
+        title: 'Allowance Check Failed',
+        message: 'Failed to check token allowance. Please try again.',
+        code: 'E_ALLOWANCE_CHECK',
+        category: 'contract'
       });
-
-      // Only mark as checked if we're not loading allowance
-      if (!isAllowanceLoading || (sessionData?.transactionType !== 'fundPool' && sessionData?.transactionType !== 'createAndFundFactory')) {
-        setNeedsApproval(false);
-        setAllowanceChecked(true);
-      }
     }
   }, [allowance, sessionData, preparedTx?.contractAddress, address, isAllowanceLoading]);
 
-  // 4. Centralized error handling from all wagmi hooks
   useEffect(() => {
-    const errorSource = simulationError || writeError || receiptError;
+    const errorSource = simulationError || writeError || receiptError || (isApprovalError && approvalReceiptError);
 
-    // Don't show simulation errors during approval process
-    if (errorSource && !(isApprovalPending || isApprovalConfirming || needsApproval)) {
+    if (errorSource && !(isApprovalPending || isApprovalConfirming)) {
       const allAbis = [RewardPoolFactoryAbi, RewardPoolImplementationAbi, ClaimRouterAbi];
       const decodedError = toUserError(errorSource, { abis: allAbis as Abi[] });
+      if (isApprovalError) {
+        decodedError.title = 'Token Approval Failed';
+        decodedError.message = `Token approval was rejected: ${decodedError.message}`;
+      }
       setUserError(decodedError);
       setLoading(false);
 
       // Update backend about the failure
-      if (txHash || !simulationError) { // Avoid reporting simulation errors before a tx is even sent
-        updateSessionStatus('failed', txHash ?? undefined, decodedError.message);
+      if (txHash || approvalData || !simulationError) {
+        updateSessionStatus('failed', txHash || approvalData || undefined, decodedError.message);
       }
     }
-  }, [simulationError, writeError, receiptError, updateSessionStatus, txHash, isApprovalPending, isApprovalConfirming, needsApproval]);
+  }, [simulationError, writeError, receiptError, isApprovalError, approvalReceiptError, updateSessionStatus, txHash, approvalData, isApprovalPending, isApprovalConfirming]);
 
   // Estimate gas for the transaction
   const estimateGas = useCallback(async () => {
     if (!sessionData) return;
 
     try {
-      const { securePost } = await import('../utils/api');
-      const response = await securePost('/api/v1/transaction/estimate-gas', {
-        type: sessionData.transactionType,
-        creator: sessionData.transactionParams.creator,
-        token: sessionData.transactionParams.token,
-        amount: sessionData.transactionParams.amount,
-        poolAddress: sessionData.transactionParams.poolAddress,
+      const response = await authManager.secureCall('/api/v1/transaction/estimate-gas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: sessionData.transactionType,
+          creator: sessionData.transactionParams.creator,
+          token: sessionData.transactionParams.token,
+          amount: sessionData.transactionParams.amount,
+          poolAddress: sessionData.transactionParams.poolAddress,
+        })
       });
 
-      const totalCost = parseFloat(response.data.totalCost);
+      if (!response.ok) {
+        throw new Error('Failed to estimate gas');
+      }
+
+      const gasData = await response.json();
+      const totalCost = parseFloat(gasData.data.totalCost);
       setGasEstimate({
-        ...response.data,
+        ...gasData.data,
         isExpensive: totalCost > 0.001 // Flag if > 0.001 ETH
       });
     } catch (err) {
       console.warn('Gas estimation failed:', err);
     }
-  }, [sessionData]);
+  }, [sessionData, authManager]);
 
   // Execute token approval
   const executeApproval = useCallback(async () => {
@@ -340,16 +416,41 @@ export default function TransactionPage() {
     writeContract(simulationRequest.request);
   }, [simulationRequest, writeContract]);
 
-  // Handle approval success - refresh allowance
   useEffect(() => {
     if (isApprovalConfirmed) {
       setIsApproving(false);
-      setAllowanceChecked(false); // Reset to trigger a new allowance check and simulation
-      // Force refetch the allowance immediately
-      refetchAllowance();
-      console.log('Approval transaction confirmed - refetching allowance');
+
+      const recheckAllowance = async () => {
+        try {
+          // Poll for allowance update with exponential backoff
+          for (let i = 0; i < 6; i++) { // Poll for ~32 seconds
+            const { data: newAllowance } = await refetchAllowance();
+            if (newAllowance !== undefined && sessionData?.transactionParams.amount) {
+              const requiredAmount = parseEther(sessionData.transactionParams.amount);
+              if ((newAllowance as bigint) >= requiredAmount) {
+                // Allowance is sufficient, wagmi's state is updated,
+                // the other useEffect will handle setting needsApproval.
+                return;
+              }
+            }
+            // Wait before next poll
+            await new Promise(resolve => setTimeout(resolve, 500 * Math.pow(2, i)));
+          }
+          throw new Error('Allowance did not update in time.');
+        } catch (error) {
+          console.error('Failed to recheck allowance after approval:', error);
+          setUserError({
+            title: 'Approval Verification Failed',
+            message: 'Could not verify token approval. The network may be congested. Please refresh and try again.',
+            code: 'E_APPROVAL_VERIFICATION',
+            category: 'contract'
+          });
+        }
+      };
+
+      recheckAllowance();
     }
-  }, [isApprovalConfirmed, refetchAllowance]);
+  }, [isApprovalConfirmed, refetchAllowance, sessionData]);
 
   // Handle transaction submission success
   useEffect(() => {
@@ -442,7 +543,35 @@ export default function TransactionPage() {
     }
   };
 
-  if (!connected || !address) {
+  // Check session auth first, fallback to wallet connection
+  const hasValidAuth = isAuthenticated || (isConnected && address);
+
+  // Show loading during auto-authentication
+  if (isAutoAuthenticating) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center py-24 px-4 sm:px-6 relative overflow-hidden">
+        <div className="max-w-2xl mx-auto text-center">
+          <RevealUp distance={8}>
+            <div className="w-16 h-16 mx-auto mb-6 ultra-premium-glass-card rounded-full flex items-center justify-center border border-primary-500/40">
+              <Shield className="w-8 h-8 text-primary-400" />
+            </div>
+            <h2 className="text-2xl font-light text-text-primary mb-4 font-system">
+              Authenticating...
+            </h2>
+            <p className="text-text-secondary leading-relaxed mb-8">
+              Setting up your secure session for the transaction
+            </p>
+            <div className="relative w-8 h-8 mx-auto animate-spin rounded-full border-2 border-primary-500/30 border-t-primary-500"></div>
+          </RevealUp>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasValidAuth) {
+    const sessionId = searchParams.get('sessionId');
+    const redirectUrl = sessionId ? `/connect?from=transaction&sessionId=${sessionId}` : '/connect';
+
     return (
       <div className="min-h-screen flex flex-col justify-center py-24 px-4 sm:px-6 relative overflow-hidden">
         <div className="max-w-2xl mx-auto text-center">
@@ -450,15 +579,22 @@ export default function TransactionPage() {
             <div className="w-16 h-16 mx-auto mb-6 ultra-premium-glass-card rounded-full flex items-center justify-center border border-red-500/40">
               <Shield className="w-8 h-8 text-red-400" />
             </div>
-            <h2 className="text-2xl font-light text-text-primary mb-4 font-system">Wallet Not Connected</h2>
-            <p className="text-text-secondary leading-relaxed mb-8">Please connect your wallet to proceed with the transaction</p>
+            <h2 className="text-2xl font-light text-text-primary mb-4 font-system">
+              {isAuthenticated ? 'Wallet Connection Required' : 'Authentication Required'}
+            </h2>
+            <p className="text-text-secondary leading-relaxed mb-8">
+              {isAuthenticated
+                ? 'Please connect your wallet to sign the transaction'
+                : 'Please authenticate to proceed with the transaction'
+              }
+            </p>
             <AnimatedButton
-              onClick={() => navigate('/connect')}
+              onClick={() => navigate(redirectUrl)}
               variant="primary"
               icon={ArrowRight}
               className="font-system"
             >
-              Connect Wallet
+              {isAuthenticated ? 'Connect Wallet' : 'Authenticate'}
             </AnimatedButton>
           </RevealUp>
         </div>
