@@ -1,7 +1,7 @@
 import { Shield, Target, Lock } from 'lucide-react';
 import { RevealUp } from '../motion/Reveal';
 import { TiltCard } from '../motion/TiltCard';
-import { UnifiedSpline } from '../shared/UnifiedSpline';
+import { SimpleSpline } from '../shared/SimpleSpline';
 
 export function MetadatasetsHero() {
   const features = [
@@ -32,7 +32,7 @@ export function MetadatasetsHero() {
     <section className="min-h-screen flex flex-col justify-center py-24 px-4 sm:px-6 relative overflow-hidden">
       {/* Direct 3D Background Animation */}
       <div className="absolute inset-0 z-0">
-        <UnifiedSpline
+        <SimpleSpline
           url="/particle-nebula.splinecode"
           className="absolute inset-0"
           style={{

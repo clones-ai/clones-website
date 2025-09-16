@@ -1,6 +1,5 @@
 import { RevealUp } from '../components/motion/Reveal';
 import { AnimatedButton } from '../components/motion/AnimatedButton';
-import { UnifiedSpline } from '../components/shared/UnifiedSpline';
 
 interface ErrorPageProps {
   errorCode?: string;
@@ -13,10 +12,10 @@ export default function ErrorPage({
 }: ErrorPageProps) {
 
   return (
-    <div className="min-h-screen overflow-hidden -mt-20 bg-black">
+    <div className="min-h-screen overflow-hidden -mt-20">
       <div className="relative h-screen">
         {/* Ultra-black background layer */}
-        <div className="absolute inset-0 z-0" style={{ backgroundColor: '#000000' }}></div>
+        <div className="absolute inset-0 z-0"></div>
 
         {/* Background Animation */}
         <div className="absolute inset-0 z-10 flex items-center justify-center">
@@ -32,17 +31,8 @@ export default function ErrorPage({
                 minHeight: '300px'
               }}
             >
-              <div className="absolute inset-0" style={{ backgroundColor: '#000000' }}></div>
-              <div
-                className="relative z-10 w-full h-full"
-                style={{ opacity: '0.3', filter: 'brightness(0.8) contrast(1.2)' }}
-              >
-                <UnifiedSpline
-                  url="/liquid-ring.splinecode"
-                  className="w-full h-full"
-                  loading="eager"
-                />
-              </div>
+              <div className="absolute inset-0"></div>
+
             </div>
           </div>
         </div>

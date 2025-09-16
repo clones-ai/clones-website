@@ -1,13 +1,13 @@
 import { RevealUp } from '../motion/Reveal';
 import { TiltCard } from '../motion/TiltCard';
-import { UnifiedSpline } from '../shared/UnifiedSpline';
+import { SimpleSpline } from '../shared/SimpleSpline';
 
 export function BurnPortal() {
 
   return (
     <section className="min-h-screen flex flex-col justify-center pt-4 pb-24 px-4 sm:px-6 relative overflow-hidden">
       <div className="absolute inset-0 z-0 hidden xl:block">
-        <UnifiedSpline
+        <SimpleSpline
           url="/fire-particle.splinecode"
           className="absolute inset-0"
           style={{

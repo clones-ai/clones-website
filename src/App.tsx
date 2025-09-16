@@ -50,7 +50,7 @@ if ('requestIdleCallback' in window) {
   });
 }
 
-const soon = false;
+const soon = true;
 
 function AppContent() {
   const location = useLocation();

@@ -1,6 +1,6 @@
 import { RevealUp } from '../components/motion/Reveal';
 import Footer from '../components/Footer';
-import { UnifiedSpline } from '../components/shared/UnifiedSpline';
+import { SimpleSpline } from '../components/shared/SimpleSpline';
 
 
 
@@ -24,23 +24,39 @@ export default function SoonPage() {
                 sm:min-w-[300px] sm:min-h-[300px]
               "
             >
-              <div
-                className="relative z-30 w-full h-full will-change-transform"
-                style={{
-                  transform: `scale(1)`,
-                  transformOrigin: '50% 50%'
-                }}
-              >
-                <UnifiedSpline
-                  url="/scene.splinecode"
-                  className="w-full h-full"
-                  style={{
-                    filter: 'brightness(1.3) contrast(1.5) opacity(0.5)',
-                    backgroundColor: 'transparent'
-                  }}
-                  loading="eager"
-                  enableInteraction={true}
-                />
+              <div className="relative z-30 w-full h-full">
+                {/* Mobile: Video fallback */}
+                <div className="block sm:hidden w-full h-full">
+                  <video
+                    className="w-full h-full object-cover"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    style={{
+                      opacity: 0,
+                      backgroundColor: 'transparent'
+                    }}
+                  >
+                    <source src="/brain.webm" type="video/webm" />
+                    <source src="/brain.mp4" type="video/mp4" />
+                  </video>
+                </div>
+
+                {/* Desktop: Spline 3D */}
+                <div className="hidden sm:block w-full h-full">
+                  <SimpleSpline
+                    url="/brain.splinecode"
+                    className="w-full h-full"
+                    style={{
+                      filter: ' opacity(0.8)',
+                      backgroundColor: 'transparent'
+                    }}
+                    loading="eager"
+                    enableInteraction={true}
+                  />
+                </div>
+
               </div>
             </div>
           </div>

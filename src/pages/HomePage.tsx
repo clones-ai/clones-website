@@ -3,7 +3,7 @@ import { XIcon } from 'lucide-react';
 import { RevealUp } from '../components/motion/Reveal';
 import { AnimatedButton } from '../components/motion/AnimatedButton';
 import { TiltCard } from '../components/motion/TiltCard';
-import { UnifiedSpline } from '../components/shared/UnifiedSpline';
+import { SimpleSpline } from '../components/shared/SimpleSpline';
 
 export default function HomePage() {
   const [showVideoPopup, setShowVideoPopup] = useState(false);
@@ -14,7 +14,7 @@ export default function HomePage() {
       <div className="relative h-[80vh] sm:h-[85vh]">
         <div className="absolute inset-0 z-0" style={{ backgroundColor: '#000000' }}></div>
 
-        <div className="absolute inset-0 z-10 flex items-center justify-center pt-40">
+        <div className="absolute inset-0 z-10 flex items-center justify-center pt-40 sm:pt-40" style={{ paddingTop: window.innerWidth < 768 ? '50px' : '160px' }}>
           <div className="relative">
             <div
               className="
@@ -26,16 +26,37 @@ export default function HomePage() {
               "
             >
               <div className="relative z-30 w-full h-full">
-                <UnifiedSpline
-                  url="/scene.splinecode"
-                  className="w-full h-full"
-                  style={{
-                    filter: 'brightness(1.3) contrast(1.5) opacity(0.5)',
-                    backgroundColor: 'transparent'
-                  }}
-                  loading="eager"
-                  enableInteraction={true}
-                />
+                {/* Mobile: Video fallback */}
+                <div className="block sm:hidden w-full h-full">
+                  <video
+                    className="w-full h-full object-cover"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    style={{
+                      opacity: 1,
+                      backgroundColor: 'transparent'
+                    }}
+                  >
+                    <source src="/brain.webm" type="video/webm" />
+                    <source src="/brain.mp4" type="video/mp4" />
+                  </video>
+                </div>
+
+                {/* Desktop: Spline 3D */}
+                <div className="hidden sm:block w-full h-full">
+                  <SimpleSpline
+                    url="/brain.splinecode"
+                    className="w-full h-full"
+                    style={{
+                      filter: ' opacity(0.8)',
+                      backgroundColor: 'transparent'
+                    }}
+                    loading="eager"
+                    enableInteraction={true}
+                  />
+                </div>
               </div>
             </div>
           </div>

@@ -1,13 +1,13 @@
 import { RevealUp } from '../motion/Reveal';
 import { AnimatedButton } from '../motion/AnimatedButton';
-import { UnifiedSpline } from '../shared/UnifiedSpline';
+import { SimpleSpline } from '../shared/SimpleSpline';
 
 export function MarketplaceHero() {
   return (
     <section className="min-h-[110vh] flex flex-col justify-center relative pt-12 pb-20 px-4 sm:px-6 overflow-hidden">
       {/* Background Animation - Full Screen */}
       <div className="absolute inset-0 z-0">
-        <UnifiedSpline
+        <SimpleSpline
           url="/data-transfer.splinecode"
           className="absolute inset-0"
           style={{
