@@ -152,12 +152,12 @@ export default function HomePage() {
                   </div>
                 </div>
                 <a
-                  href="https://dexscreen.com/base/0x15eB86c7E54B350bf936d916Df33AEF697202E29"
+                  href="https://dexscreener.com/base/0xb5c8bb04a2cddf6798dae69955c63b41883ab5b4"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-primary-500 hover:text-primary-400 transition-all duration-200 text-sm font-medium font-system group"
                 >
-                  View on DexScreen
+                  View on DexScreener
                   <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
