@@ -1,31 +1,24 @@
 
 interface FooterProps {
   isHomePage?: boolean;
-  platformLinksMode?: 'default' | 'soon' | 'hidden';
 }
 
-export default function Footer({ isHomePage = false, platformLinksMode = 'default' }: FooterProps) {
+export default function Footer({ isHomePage = false }: FooterProps) {
   return (
     <footer className={`relative ${isHomePage ? 'bg-black' : ''}`}>
       <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-6 relative z-10">
           {/* Main Footer Content */}
-          <div className={`grid ${platformLinksMode !== 'hidden' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-6 mb-4`}>
+          <div className={`grid md:grid-cols-3 gap-6 mb-4`}>
             {/* Platform Links */}
-            {platformLinksMode !== 'hidden' && (
-              <div className="text-center">
-                <h4 className="text-text-primary font-semibold mb-3 font-sans">Platform</h4>
-                {platformLinksMode === 'default' ? (
-                  <ul className="space-y-2 text-sm">
-                    <li><a href="/forge" className="footer-link">Forge</a></li>
-                    <li><a href="/marketplace" className="footer-link">Marketplace</a></li>
-                    <li><a href="/meta-datasets" className="footer-link">Meta Datasets</a></li>
-                  </ul>
-                ) : (
-                  <p className="text-sm text-text-muted">Soon</p>
-                )}
-              </div>
-            )}
+            <div className="text-center">
+              <h4 className="text-text-primary font-semibold mb-3 font-sans">Platform</h4>
+              <ul className="space-y-2 text-sm">
+                <li><a href="/forge" className="footer-link">Forge</a></li>
+                <li><a href="/marketplace" className="footer-link">Marketplace</a></li>
+                <li><a href="/meta-datasets" className="footer-link">Meta Datasets</a></li>
+              </ul>
+            </div>
 
             {/* Community Links */}
             <div className="text-center">

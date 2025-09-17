@@ -92,7 +92,7 @@ export default function SoonPage() {
         </div>
       </div>
 
-      <Footer platformLinksMode="soon" isHomePage={true} />
+      <Footer isHomePage={true} />
     </div >
   );
 }

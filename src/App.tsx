@@ -4,11 +4,11 @@ import { SmoothScroll } from './components/motion/SmoothScroll';
 import { ScrollToTop } from './components/motion/ScrollToTop';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { CriticalResourcePreloader, usePerformanceMonitoring } from './components/shared/CriticalResourcePreloader';
-import { PerformanceMonitor } from './components/shared/PerformanceMonitor';
+
 import Navigation from './components/Navigation';
 import Footer from './components/Footer';
 import WalletProvider from './features/wallet/WalletProvider';
-import SoonPage from './pages/SoonPage';
+
 // Lazy load pages with intelligent preloading
 const HomePage = React.lazy(() => import('./pages/HomePage'));
 const ForgePage = React.lazy(() =>
@@ -50,8 +50,6 @@ if ('requestIdleCallback' in window) {
   });
 }
 
-const soon = false;
-
 function AppContent() {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
@@ -88,9 +86,6 @@ function App() {
   // Monitor performance metrics
   usePerformanceMonitoring();
 
-  if (soon) {
-    return <SoonPage />;
-  }
   return (
     <WalletProvider>
       <SmoothScroll>
