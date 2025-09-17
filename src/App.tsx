@@ -102,7 +102,7 @@ function App() {
             '/taskReward.webp'
           ]}
         />
-        <PerformanceMonitor showInDev={true} position="bottom-right" />
+        {/*  <PerformanceMonitor showInDev={true} position="bottom-right" /> */}
         <Router>
           <ScrollToTop />
           {/* Dedicated container for glow cloud effects */}

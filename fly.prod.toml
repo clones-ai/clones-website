@@ -9,7 +9,7 @@ primary_region = 'lax'
 
 [build]
   [build.args]
-    VITE_API_URL = "https://clones-backend-prod.fly.dev"
+    VITE_API_URL = "https://api.clones-ai.com"
     VITE_AUTH_ENDPOINT = "/api/v1/wallet/connect"
     VITE_DESKTOP_SCHEME = "clones-prod"
     VITE_BASESCAN_BASE_URL = "https://basescan.org/"
