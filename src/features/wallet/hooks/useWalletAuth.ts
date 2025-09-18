@@ -41,6 +41,10 @@ export function useWalletAuth() {
 
     const [isSigning, setIsSigning] = useState(false);
     const signingRef = useRef(false);
+    
+    // Circuit breaker for auth backend calls
+    const authFailureCount = useRef(0);
+    const lastAuthAttempt = useRef(0);
 
     const connected = isConnected && !!address && !!walletClient && status === 'connected';
     const ready = connected && !isWalletClientLoadingRaw;
@@ -115,17 +119,60 @@ export function useWalletAuth() {
      */
     const sendAuthToBackend = useCallback(
         async (payload: AuthPayload, token?: string | null) => {
-            const { AuthManager } = await import('../auth');
+            console.log('🚀 sendAuthToBackend called', { 
+                address: payload.address,
+                hasToken: !!token,
+                timestamp: payload.timestamp,
+                failureCount: authFailureCount.current 
+            });
 
-            // Merge token into the payload body (required by backend schema)
-            const authData = {
-                ...payload,
-                ...(token ? { token } : {}),
-            };
+            // Circuit breaker: prevent auth spam
+            const now = Date.now();
+            const timeSinceLastAttempt = now - lastAuthAttempt.current;
+            
+            if (authFailureCount.current >= 3) {
+                const waitTime = Math.min(5000 * Math.pow(2, authFailureCount.current - 3), 30000); // Max 30s
+                if (timeSinceLastAttempt < waitTime) {
+                    const waitSeconds = Math.ceil((waitTime - timeSinceLastAttempt) / 1000);
+                    console.warn(`🚫 Auth circuit breaker: waiting ${waitSeconds}s before retry`);
+                    throw new Error(`Too many authentication attempts. Please wait ${waitSeconds} seconds before trying again.`);
+                }
+            }
+            
+            lastAuthAttempt.current = now;
 
-            // Use AuthManager for proper session management
-            const authManager = AuthManager.getInstance();
-            await authManager.authenticateWithWallet(authData);
+            try {
+                const { createAuthService } = await import('../../auth');
+
+                // Merge token into the payload body (required by backend schema)
+                const authData = {
+                    ...payload,
+                    ...(token ? { token } : {}),
+                };
+
+                console.log('📡 Calling AuthService.authenticateWithWallet...', {
+                    endpoint: '/api/v1/wallet/connect',
+                    address: authData.address
+                });
+
+                // Use AuthService for authentication
+                const authService = createAuthService();
+                const result = await authService.authenticateWithWallet(authData);
+                
+                // Reset failure count on success
+                authFailureCount.current = 0;
+                console.log('✅ Authentication successful', result);
+                
+                return result;
+            } catch (error) {
+                authFailureCount.current++;
+                console.error('❌ Authentication failed', { 
+                    error,
+                    failureCount: authFailureCount.current,
+                    timeSinceLastAttempt 
+                });
+                throw error;
+            }
         },
         []
     );

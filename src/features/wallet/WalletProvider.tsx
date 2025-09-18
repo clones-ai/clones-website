@@ -4,14 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
     RainbowKitProvider,
     lightTheme,
-    connectorsForWallets,
+    getDefaultConfig,
 } from '@rainbow-me/rainbowkit';
-import {
-    injectedWallet,
-    walletConnectWallet,
-    coinbaseWallet,
-    metaMaskWallet,
-} from '@rainbow-me/rainbowkit/wallets';
 import { base, baseSepolia } from 'wagmi/chains';
 import { AuthProvider } from '../auth/AuthProvider';
 
@@ -23,29 +17,12 @@ interface WalletProviderProps {
 }
 
 /**
- * Build wagmi config for Base + Base Sepolia with explicit connectors.
- * This approach avoids getDefaultConfig compatibility issues.
+ * Use getDefaultConfig for better compatibility with RainbowKit v2 + Wagmi v2
+ * This should resolve connector.getChainId issues
  */
-const connectors = connectorsForWallets(
-    [
-        {
-            groupName: 'Recommended',
-            wallets: [
-                metaMaskWallet,
-                injectedWallet,
-                coinbaseWallet,
-                walletConnectWallet,
-            ],
-        },
-    ],
-    {
-        appName: 'Clones Desktop',
-        projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo-project-id',
-    }
-);
-
-const config = createConfig({
-    connectors,
+export const config = getDefaultConfig({
+    appName: 'Clones Desktop',
+    projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo-project-id',
     chains: [base, baseSepolia],
     transports: {
         [base.id]: http(),
