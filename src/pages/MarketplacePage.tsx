@@ -1,4 +1,3 @@
-import React from 'react';
 import { MarketplaceHero } from '../components/marketplace/MarketplaceHero';
 import { HowItWorks } from '../components/marketplace/HowItWorks';
 import { WhatYoureTrading } from '../components/marketplace/WhatYoureTrading';

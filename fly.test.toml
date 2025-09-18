@@ -13,6 +13,7 @@ primary_region = 'lax'
     VITE_DESKTOP_SCHEME = "clones-dev"
     VITE_BASESCAN_BASE_URL = "https://sepolia.basescan.org/"
     VITE_FAUCET_CONTRACT_ADDRESS = "0xeD3F1269678108AB079641c4d9d59639A7047dC6"
+    VITE_ENABLE_ANALYTICS = "false"
   
   [build.secrets]
     VITE_WALLETCONNECT_PROJECT_ID = "VITE_WALLETCONNECT_PROJECT_ID"

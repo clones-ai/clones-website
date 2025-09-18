@@ -3,15 +3,15 @@ import { decodeErrorResult, formatEther } from 'viem';
 import type { BaseError } from 'wagmi';
 
 export type ErrorCategory = 'user' | 'contract' | 'network' | 'gas' | 'unknown';
+export type ErrorCode = string;
 
-export type UserFacingError = {
+export interface UserFacingError {
     title: string;
     message: string;
-    code: string;
     category: ErrorCategory;
-    // raw decoded info for observability
-    meta?: Record<string, unknown>;
-};
+    code: ErrorCode;
+    context?: Record<string, any>;
+}
 
 export function tryDecodeWithAbis(data: Hex | undefined, abis: Abi[]): null | {
     name: string;
@@ -40,7 +40,7 @@ export function toUserError(
     const data = base?.cause?.data as Hex | undefined;
 
     // Enhanced debugging for development
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV === 'development') {
         console.log('toUserError - Full error:', err);
         console.log('toUserError - Base error:', base);
         console.log('toUserError - Error data:', data);
@@ -64,7 +64,7 @@ export function toUserError(
                     message: role ? `This action requires role "${role}".` : 'Access denied by contract.',
                     code: 'E_UNAUTHORIZED',
                     category: 'contract',
-                    meta: { name, args },
+                    context: { name, args },
                 };
             }
             case 'InvalidParameter': { // InvalidParameter(string param)
@@ -74,7 +74,7 @@ export function toUserError(
                     message: param ? `Invalid "${param}". Please verify your input.` : 'One or more parameters are invalid.',
                     code: 'E_INVALID_PARAMETER',
                     category: 'contract',
-                    meta: { name, args },
+                    context: { name, args },
                 };
             }
             case 'ReentrancyGuardReentrantCall':
@@ -83,7 +83,7 @@ export function toUserError(
                     message: 'This operation was blocked by reentrancy guard. Please retry shortly.',
                     code: 'E_REENTRANCY',
                     category: 'contract',
-                    meta: { name, args },
+                    context: { name, args },
                 };
             case 'EnforcedPause':
             case 'ExpectedPause':
@@ -92,7 +92,7 @@ export function toUserError(
                     message: 'The contract is currently paused. Please try again later.',
                     code: 'E_PAUSED',
                     category: 'contract',
-                    meta: { name, args },
+                    context: { name, args },
                 };
             case 'AlreadyExists': { // AlreadyExists(string resource)
                 const resource = args?.[0] as string | undefined;
@@ -101,7 +101,7 @@ export function toUserError(
                     message: resource ? `"${resource}" already exists.` : 'Resource already exists.',
                     code: 'E_ALREADY_EXISTS',
                     category: 'contract',
-                    meta: { name, args },
+                    context: { name, args },
                 };
             }
             case 'InsufficientBalance': { // InsufficientBalance(uint256 balance, uint256 needed)
@@ -112,7 +112,7 @@ export function toUserError(
                     message: `Pool balance ${formatEther((bal ?? 0n) as bigint)} is lower than required ${formatEther((need ?? 0n) as bigint)}.`,
                     code: 'E_POOL_BALANCE',
                     category: 'contract',
-                    meta: { name, args },
+                    context: { name, args },
                 };
             }
             case 'SecurityViolation': { // SecurityViolation(string check)
@@ -127,7 +127,7 @@ export function toUserError(
                     message,
                     code: 'E_SECURITY',
                     category: 'contract',
-                    meta: { name, args },
+                    context: { name, args },
                 };
             }
             case 'SafeERC20FailedOperation': { // (address token)
@@ -136,7 +136,7 @@ export function toUserError(
                     message: 'ERC20 operation failed. The token may be fee-on-transfer or non-compliant.',
                     code: 'E_ERC20_SAFE',
                     category: 'contract',
-                    meta: { name, args },
+                    context: { name, args },
                 };
             }
             case 'ECDSAInvalidSignature':
@@ -147,7 +147,7 @@ export function toUserError(
                     message: 'Signature verification failed.',
                     code: 'E_SIGNATURE',
                     category: 'contract',
-                    meta: { name, args },
+                    context: { name, args },
                 };
             default:
                 // Unknown custom error, still useful to bubble up name & args
@@ -156,7 +156,7 @@ export function toUserError(
                     message: `${name} ${Array.isArray(args) ? JSON.stringify(args) : ''}`.trim(),
                     code: `E_${name.toUpperCase()}`,
                     category: 'contract',
-                    meta: { name, args },
+                    context: { name, args },
                 };
         }
     }
@@ -188,5 +188,5 @@ export function toUserError(
         return { title: 'Token transfer failed', message: 'Token transfer was rejected. Check your balance and approvals.', code: 'E_TRANSFER_FAILED', category: 'contract' };
     }
 
-    return { title: 'Unknown error', message: base.shortMessage || base.message || 'Transaction failed.', code: 'E_UNKNOWN', category: 'unknown', meta: { details: base?.cause?.details } };
+    return { title: 'Unknown error', message: base.shortMessage || base.message || 'Transaction failed.', code: 'E_UNKNOWN', category: 'unknown', context: { details: base?.cause?.details } };
 }

@@ -63,7 +63,7 @@ class AuthFlowTester {
       this.setCookieFromResponse(response);
 
       const data = await response.json().catch(() => ({}));
-      
+
       console.log(`✅ Status: ${response.status}`);
       console.log('Response:', JSON.stringify(data, null, 2));
 
@@ -167,10 +167,10 @@ class AuthFlowTester {
     try {
       // Test 1: Bootstrap flow
       const sessionData = await this.testBootstrapFlow();
-      
+
       // Test 2: CSRF protection
       await this.testCSRFProtection();
-      
+
       // Test 3: Connect endpoint
       await this.testConnectEndpoint();
 
@@ -180,9 +180,9 @@ class AuthFlowTester {
       console.log('✅ CSRF token retrieval working');
       console.log('✅ CSRF protection active');
       console.log('✅ Connect endpoint accessible without CSRF');
-      
+
       console.log('\n🔒 Security Status: GOOD');
-      console.log('Frontend AuthManager should work correctly with this backend configuration.');
+      console.log('The new frontend auth module should work correctly with this backend configuration.');
 
     } catch (error) {
       console.error('\n❌ Test failed:', error.message);

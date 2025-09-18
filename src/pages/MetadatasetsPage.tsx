@@ -1,4 +1,3 @@
-import React from 'react';
 import { MetadatasetsHero } from '../components/metadatasets/MetadatasetsHero';
 import { PrivateAllocation } from '../components/metadatasets/PrivateAllocation';
 import { DataVault } from '../components/metadatasets/DataVault';

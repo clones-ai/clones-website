@@ -1,9 +1,12 @@
 /**
  * Authentication Module
  * 
- * Unified authentication management with CSRF protection
+ * Clean authentication architecture with separated concerns
  */
 
-export { AuthManager } from './AuthManager';
-export { AuthProvider, useAuth } from './AuthProvider';
-export type { AuthState } from './AuthManager';
+export { AuthStateManager } from './AuthStateManager';
+export { AuthService, createAuthService } from './AuthService';
+export { AuthProvider } from './AuthProvider';
+export { useAuth } from './hooks';
+export type { AuthState } from './AuthStateManager';
+export type { AuthContextValue } from './context';
