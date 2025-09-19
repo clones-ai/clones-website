@@ -1275,7 +1275,7 @@ export const useTransactionProcessor = () => {
     useEffect(() => {
         const sessionId = searchParams.get('sessionId');
 
-        if (state.currentState === 'IDLE' && sessionId && !isAuthenticated && !isAuthenticatingRef.current) {
+        if (state.currentState === 'IDLE' && sessionId && !isAuthenticated && !state.isAutoAuthenticating) {
             // Don't auto-retry if we've failed recently and are in cooldown
             const now = Date.now();
             const timeSinceLastAttempt = now - lastAuthAttempt.current;
@@ -1283,7 +1283,6 @@ export const useTransactionProcessor = () => {
             
             if (!isInCooldown) {
                 console.log('🚀 Triggering auto-authentication for sessionId:', sessionId);
-                isAuthenticatingRef.current = true;
                 dispatch({ type: 'START_AUTHENTICATION' });
             } else {
                 console.warn('🚫 Auto-authentication in cooldown, skipping');
@@ -1369,14 +1368,14 @@ export const useTransactionProcessor = () => {
 
         // Stale simulation check: ensure chain and account have not changed since simulation
         const simulatedChainId = state.simulationRequest?.request.chainId;
-        const simulatedAccount = (state.simulationRequest?.request as { account?: `0x${string}` })?.account;
+        const simulatedAccountRaw = (state.simulationRequest?.request as { account?: any })?.account;
         
-        // Debug log for simulatedAccount type issues
-        if (simulatedAccount && typeof simulatedAccount !== 'string') {
-            console.warn('simulatedAccount is not a string:', typeof simulatedAccount, simulatedAccount);
-        }
+        // Extract address from account object (Wagmi can return { address: "0x...", type: "json-rpc" })
+        const simulatedAccount = typeof simulatedAccountRaw === 'string' 
+            ? simulatedAccountRaw 
+            : simulatedAccountRaw?.address;
 
-        if (simulatedChainId !== currentChain?.id || (simulatedAccount && typeof simulatedAccount === 'string' && simulatedAccount.toLowerCase() !== address?.toLowerCase())) {
+        if (simulatedChainId !== currentChain?.id || (simulatedAccount && simulatedAccount.toLowerCase() !== address?.toLowerCase())) {
             console.warn('Stale simulation detected. Chain or account has changed. Re-simulating...');
             dispatch({ type: 'START_SIMULATION' });
             return;

@@ -15,9 +15,7 @@ primary_region = 'lax'
     VITE_BASESCAN_BASE_URL = "https://basescan.org/"
     VITE_FAUCET_CONTRACT_ADDRESS = "0xeD3F1269678108AB079641c4d9d59639A7047dC6"
     VITE_ENABLE_ANALYTICS = "true"
-  
-  [build.secrets]
-    VITE_WALLETCONNECT_PROJECT_ID = "VITE_WALLETCONNECT_PROJECT_ID"
+    VITE_WALLETCONNECT_PROJECT_ID= "f6f818cce9847f688605012eaaf4de8a"
 
 [env]
   # Runtime environment variables (if needed)
