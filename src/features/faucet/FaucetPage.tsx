@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Droplets, Clock, Shield, AlertCircle, CheckCircle, Copy, ExternalLink } from 'lucide-react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
-import { parseEther } from 'viem';
+import { formatEther } from 'viem';
 import { RevealUp } from '../../components/motion/Reveal';
 import { AnimatedButton } from '../../components/motion/AnimatedButton';
 
@@ -50,8 +50,6 @@ const FAUCET_ABI = [
 interface FaucetStatus {
   canClaim: boolean;
   timeUntilNextClaim: number;
-  claimAmount: string;
-  dailyRemaining: string;
 }
 
 export default function FaucetPage() {
@@ -107,8 +105,6 @@ export default function FaucetPage() {
       setFaucetStatus({
         canClaim: canClaimData[0],
         timeUntilNextClaim: Number(canClaimData[1]),
-        claimAmount: parseEther(claimAmount.toString()).toString(),
-        dailyRemaining: parseEther(dailyStatus[1].toString()).toString()
       });
     }
   }, [canClaimData, claimAmount, dailyStatus]);
@@ -272,13 +268,13 @@ export default function FaucetPage() {
                       <div className="p-4 ultra-premium-glass-card rounded-lg">
                         <p className="text-sm text-text-secondary mb-2 font-system">Claim Amount</p>
                         <p className="text-text-primary font-medium font-system">
-                          {claimAmount ? (parseEther(claimAmount.toString()) / BigInt(10 ** 18)).toString() : '1000'} CLONES
+                          {claimAmount ? formatEther(claimAmount) : '1000'} CLONES
                         </p>
                       </div>
                       <div className="p-4 ultra-premium-glass-card rounded-lg">
                         <p className="text-sm text-text-secondary mb-2 font-system">Daily Remaining</p>
                         <p className="text-text-primary font-medium font-system">
-                          {dailyStatus ? (dailyStatus[1] / BigInt(10 ** 18)).toString() : '0'} CLONES
+                          {dailyStatus ? formatEther(dailyStatus[1]) : '0'} CLONES
                         </p>
                       </div>
                       <div className="p-4 ultra-premium-glass-card rounded-lg md:col-span-2">
