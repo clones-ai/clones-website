@@ -63,6 +63,15 @@ export default defineConfig({
             console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
           });
         }
+      },
+      '/tigris': {
+        target: 'https://releases-test.clones-ai.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/tigris/, ''),
+        headers: {
+          'Origin': 'https://clones-site-test.fly.dev'
+        }
       }
     }
   }
