@@ -21,13 +21,20 @@ declare global {
 
 const DEEPLINK_SCHEME = import.meta.env.VITE_DESKTOP_SCHEME || 'clones-dev';
 
-type OS = 'Windows' | 'macOS' | 'Linux' | 'Unknown';
+type OS = 'Windows' | 'macOS' | 'Linux' | 'iOS' | 'Android' | 'Unknown';
 
 function getOS(): OS {
   const userAgent = window.navigator.userAgent;
+  
+  // Mobile detection first
+  if (/iPhone|iPad|iPod/i.test(userAgent)) return "iOS";
+  if (/Android/i.test(userAgent)) return "Android";
+  
+  // Desktop detection
   if (userAgent.indexOf("Win") !== -1) return "Windows";
   if (userAgent.indexOf("Mac") !== -1) return "macOS";
   if (userAgent.indexOf("Linux") !== -1) return "Linux";
+  
   return "Unknown";
 }
 
@@ -170,7 +177,22 @@ export function DownloadButtons({ referralCode }: DownloadButtonsProps) {
     );
   }
 
-  // Unsupported platforms
+  // Mobile platforms
+  if (os === 'iOS' || os === 'Android') {
+    return (
+      <div className="space-y-4">
+        <div className="group relative w-full inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#1A1A1A] border border-blue-500/20 text-[#94A3B8] rounded-full cursor-not-allowed">
+          <AlertCircle className="w-5 h-5 text-blue-400" />
+          <span className="font-medium text-center">Clones is only available on desktop computers</span>
+        </div>
+        <div className="text-center text-sm text-[#64748B]">
+          Please visit this page from a macOS, Windows, or Linux computer to download the app.
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop platforms - Linux/Windows coming soon
   if (os === 'Linux' || os === 'Windows') {
     const platformName = os === 'Linux' ? 'Linux' : 'Windows';
     return (

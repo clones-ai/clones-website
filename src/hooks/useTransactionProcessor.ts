@@ -151,11 +151,11 @@ const SessionSchema = z.object({
 const AbiSchema = z.custom<Abi>((v) => {
     try {
         if (!Array.isArray(v)) return false;
-        
+
         // Basic structure validation
-        return v.every(item => 
-            typeof item === 'object' && 
-            item !== null && 
+        return v.every(item =>
+            typeof item === 'object' &&
+            item !== null &&
             'type' in item &&
             ['function', 'event', 'error', 'constructor', 'fallback', 'receive'].includes(item.type)
         );
@@ -187,7 +187,7 @@ function assertPreparedMatchesType(session: TransactionSession, preparedTx: Prep
     if (!rule) {
         throw new Error(`Unknown transaction type: ${session.transactionType}`);
     }
-    
+
     if (preparedTx.functionName !== rule.fn) {
         throw new Error(`Function name mismatch for type ${session.transactionType}: expected ${rule.fn}, got ${preparedTx.functionName}`);
     }
@@ -208,10 +208,10 @@ function assertPreparedMatchesType(session: TransactionSession, preparedTx: Prep
     // Final validation: try to encode with whitelisted ABI
     // If this throws, the preparedTx is invalid/incompatible
     try {
-        encodeFunctionData({ 
-            abi: rule.abi, 
-            functionName: rule.fn as any, 
-            args: preparedTx.args as any 
+        encodeFunctionData({
+            abi: rule.abi,
+            functionName: rule.fn as any,
+            args: preparedTx.args as any
         });
     } catch (error) {
         throw new Error(`Failed to encode function data with whitelisted ABI: ${error instanceof Error ? error.message : 'Unknown encoding error'}`);
@@ -222,16 +222,16 @@ function assertPreparedMatchesType(session: TransactionSession, preparedTx: Prep
 const redact = (msg: unknown, depth = 0, maxDepth = 2): unknown => {
     if (typeof msg === 'string') {
         return msg.replace(/sessionToken['":\s]*[^,\s}"']+/gi, 'sessionToken:[REDACTED]')
-                 .replace(/sessionId['":\s]*[^,\s}"']+/gi, 'sessionId:[REDACTED]')
-                 .replace(/authorization['":\s]*[^,\s}"']+/gi, 'authorization:[REDACTED]');
+            .replace(/sessionId['":\s]*[^,\s}"']+/gi, 'sessionId:[REDACTED]')
+            .replace(/authorization['":\s]*[^,\s}"']+/gi, 'authorization:[REDACTED]');
     }
-    
+
     if (msg && typeof msg === 'object' && depth < maxDepth) {
         try {
             // Safe redaction for objects with depth limit
             const sensitiveKeys = ['sessionToken', 'sessionId', 'authorization', 'csrfToken', 'token'];
             const redacted: any = {};
-            
+
             for (const [key, value] of Object.entries(msg)) {
                 if (sensitiveKeys.some(sk => key.toLowerCase().includes(sk.toLowerCase()))) {
                     redacted[key] = '[REDACTED]';
@@ -242,22 +242,22 @@ const redact = (msg: unknown, depth = 0, maxDepth = 2): unknown => {
                     redacted[key] = value;
                 }
             }
-            
+
             return redacted;
         } catch {
             // Fallback for problematic objects
             return '[OBJECT_REDACTION_FAILED]';
         }
     }
-    
+
     return msg;
 };
 
 // Error handling helpers
 const isUserRejected = (error: any): boolean => {
-    return error?.code === 4001 || 
-           error?.cause?.code === 4001 || 
-           error?.message?.includes('User rejected');
+    return error?.code === 4001 ||
+        error?.cause?.code === 4001 ||
+        error?.message?.includes('User rejected');
 };
 
 const createUserRejectionError = (context: 'transaction' | 'approval'): UserFacingError => ({
@@ -268,8 +268,8 @@ const createUserRejectionError = (context: 'transaction' | 'approval'): UserFaci
 });
 
 const dispatchUserError = (
-    dispatch: React.Dispatch<TransactionAction>, 
-    error: any, 
+    dispatch: React.Dispatch<TransactionAction>,
+    error: any,
     context: string,
     updateSessionStatus: (status: 'completed' | 'failed' | 'cancelled', txHash?: string, error?: string) => Promise<void>,
     txHash?: string
@@ -528,12 +528,12 @@ export const StateMachineInvariants = {
 
         if (violations.length > 0) {
             console.warn('⚠️ State invariant violations:', violations);
-            
+
             // In development, throw on invariant violations to catch bugs early
             if (process.env.NODE_ENV === 'development') {
                 throw new Error(`State machine invariant violations: ${violations.join(', ')}`);
             }
-            
+
             return false;
         }
 
@@ -553,8 +553,8 @@ type WriteParams<A extends Abi, F extends Extract<AbiFunction, { name: string }>
 };
 
 function buildWriteParams<A extends Abi>(
-    pt: PreparedTransaction, 
-    account?: `0x${string}`, 
+    pt: PreparedTransaction,
+    account?: `0x${string}`,
     chainId?: number
 ): WriteParams<A, any> {
     return {
@@ -878,17 +878,17 @@ const sideEffectHandlers: Record<TransactionState, SideEffectHandler> = {
                     console.warn('🚫 Authentication already in progress, skipping duplicate call');
                     return;
                 }
-                
+
                 // Circuit breaker: prevent auth spam
                 const now = Date.now();
                 const timeSinceLastAttempt = now - lastAuthAttempt.current;
-                
+
                 if (authFailureCount.current >= 3) {
                     const waitTime = Math.min(5000 * Math.pow(2, authFailureCount.current - 3), 30000); // Max 30s
                     if (timeSinceLastAttempt < waitTime) {
                         console.warn(`🚫 Auth circuit breaker: waiting ${Math.ceil((waitTime - timeSinceLastAttempt) / 1000)}s before retry`);
                         const userError = {
-                            title: 'Too Many Attempts', 
+                            title: 'Too Many Attempts',
                             message: `Please wait ${Math.ceil(waitTime / 1000)} seconds before trying again.`,
                             code: 'E_RATE_LIMITED',
                             category: 'user' as const
@@ -897,11 +897,11 @@ const sideEffectHandlers: Record<TransactionState, SideEffectHandler> = {
                         return;
                     }
                 }
-                
+
                 // Mark as authenticating BEFORE making the call
                 isAuthenticatingRef.current = true;
                 lastAuthAttempt.current = now;
-                
+
                 try {
                     await establishSessionFromTransaction(sessionId);
                     authFailureCount.current = 0; // Reset on success
@@ -1036,7 +1036,7 @@ export const useTransactionProcessor = () => {
 
     // Single writeContract instance handles both approvals and transactions
 
-    const { isSuccess: isApprovalConfirmed, isLoading: isApprovalConfirming, isError: isApprovalError, error: approvalReceiptError } = useWaitForTransactionReceipt({ 
+    const { isSuccess: isApprovalConfirmed, isLoading: isApprovalConfirming, isError: isApprovalError, error: approvalReceiptError } = useWaitForTransactionReceipt({
         hash: state.approvalTxHash ? (state.approvalTxHash as `0x${string}`) : undefined,
         query: { enabled: !!state.approvalTxHash }
     });
@@ -1094,7 +1094,6 @@ export const useTransactionProcessor = () => {
         args: state.preparedTx.args,
         value: normalizeValue(state.preparedTx.value),
         ...(address && { account: address }),
-        ...(currentChain && { chainId: currentChain.id }),
         query: {
             enabled: false,
         },
@@ -1229,14 +1228,14 @@ export const useTransactionProcessor = () => {
 
     const estimateGas = useCallback(async () => {
         if (!state.sessionData) return;
-        
+
         // Anti-race: prevent slow estimation from overwriting newer one
         const reqId = ++lastGasReqId.current;
-        
+
         try {
             const gasService = new GasEstimationService(secureCall);
             const estimate = await gasService.estimateGas(state.sessionData.transactionType, state.sessionData.transactionParams);
-            
+
             // Only dispatch if this is still the latest request
             if (reqId === lastGasReqId.current) {
                 dispatch({ type: 'SET_GAS_ESTIMATE', payload: { gasEstimate: estimate } });
@@ -1280,7 +1279,7 @@ export const useTransactionProcessor = () => {
             const now = Date.now();
             const timeSinceLastAttempt = now - lastAuthAttempt.current;
             const isInCooldown = authFailureCount.current >= 3 && timeSinceLastAttempt < 5000;
-            
+
             if (!isInCooldown) {
                 console.log('🚀 Triggering auto-authentication for sessionId:', sessionId);
                 dispatch({ type: 'START_AUTHENTICATION' });
@@ -1288,7 +1287,7 @@ export const useTransactionProcessor = () => {
                 console.warn('🚫 Auto-authentication in cooldown, skipping');
             }
         }
-    }, [state.currentState, searchParams, isAuthenticated]);
+    }, [state.currentState, searchParams, isAuthenticated, state.isAutoAuthenticating]);
 
     // Central Side Effects Handler for other states
     useEffect(() => {
@@ -1352,9 +1351,8 @@ export const useTransactionProcessor = () => {
             functionName: 'approve',
             args: [spender, parseUnits(state.sessionData.transactionParams.amount, tokenDecimals)],
             ...(address && { account: address }),
-            ...(currentChain && { chainId: currentChain.id }),
         });
-    }, [state.sessionData, state.currentState, writeContract, address, currentChain, tokenDecimals, tokenAddress, spender]);
+    }, [state.sessionData, state.currentState, writeContract, address, tokenDecimals, tokenAddress, spender]);
 
     const executeTransaction = useCallback(() => {
         if (state.currentState !== 'READY_TO_EXECUTE' || isWritePending) {
@@ -1369,10 +1367,10 @@ export const useTransactionProcessor = () => {
         // Stale simulation check: ensure chain and account have not changed since simulation
         const simulatedChainId = state.simulationRequest?.request.chainId;
         const simulatedAccountRaw = (state.simulationRequest?.request as { account?: any })?.account;
-        
+
         // Extract address from account object (Wagmi can return { address: "0x...", type: "json-rpc" })
-        const simulatedAccount = typeof simulatedAccountRaw === 'string' 
-            ? simulatedAccountRaw 
+        const simulatedAccount = typeof simulatedAccountRaw === 'string'
+            ? simulatedAccountRaw
             : simulatedAccountRaw?.address;
 
         if (simulatedChainId !== currentChain?.id || (simulatedAccount && simulatedAccount.toLowerCase() !== address?.toLowerCase())) {
@@ -1383,7 +1381,7 @@ export const useTransactionProcessor = () => {
 
         // Security: Use only validated preparedTx data (never trust simulationRequest for execution)
         dispatch({ type: 'EXECUTE_TRANSACTION' });
-        writeContract(buildWriteParams(state.preparedTx, address, currentChain?.id));
+        writeContract(buildWriteParams(state.preparedTx, address));
     }, [state.preparedTx, state.simulationRequest, state.currentState, isWritePending, address, currentChain, writeContract, dispatch]);
 
     // Handle approval confirmation and recheck allowance
@@ -1484,13 +1482,13 @@ export const useTransactionProcessor = () => {
 
     // Track wallet values to detect real changes
     const lastWalletState = useRef({ address, chainId });
-    
+
     // Reset flow if account or chain changes during critical states
     useEffect(() => {
         const criticalStates = ['SIMULATING', 'EXECUTING', 'CONFIRMING', 'APPROVAL_CONFIRMING'];
         const realAddressChange = lastWalletState.current.address !== address;
         const realChainChange = lastWalletState.current.chainId !== chainId;
-        
+
         if (criticalStates.includes(state.currentState) && (realAddressChange || realChainChange)) {
             console.warn('Wallet address or chain changed during transaction. Resetting flow.', {
                 oldAddress: lastWalletState.current.address,
@@ -1501,7 +1499,7 @@ export const useTransactionProcessor = () => {
             updateSessionStatus('cancelled', undefined, 'Wallet/network changed mid-flow');
             dispatch({ type: 'RESET' });
         }
-        
+
         // Update ref after check
         lastWalletState.current = { address, chainId };
     }, [address, chainId, state.currentState, updateSessionStatus]);
