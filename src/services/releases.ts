@@ -3,7 +3,7 @@ interface ReleaseFile {
   url: string;
   size: number;
   arch: string;
-  type: 'dmg' | 'app';
+  type: 'dmg' | 'app' | 'msi' | 'exe';
 }
 
 interface ReleaseManifest {
@@ -20,8 +20,9 @@ class ReleasesService {
   private cache: Map<string, { data: ReleaseManifest; timestamp: number }> = new Map();
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-  async getLatestRelease(): Promise<ReleaseManifest | null> {
-    const cacheKey = 'latest';
+  async getLatestRelease(platform?: 'macos' | 'windows'): Promise<ReleaseManifest | null> {
+    const platformPath = platform ? `/${platform}` : '';
+    const cacheKey = `latest${platformPath}`;
     const cached = this.cache.get(cacheKey);
 
     if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
@@ -29,7 +30,7 @@ class ReleasesService {
     }
 
     try {
-      const response = await fetch(`${TIGRIS_BASE_URL}/latest/version.json`);
+      const response = await fetch(`${TIGRIS_BASE_URL}/latest${platformPath}/version.json`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -76,10 +77,15 @@ class ReleasesService {
     }
   }
 
-  getDownloadUrlForPlatform(manifest: ReleaseManifest, platform: 'macos' | 'windows' | 'linux', arch: 'arm64' | 'intel' | 'x64' = 'arm64', fileType: 'dmg' | 'app' = 'dmg'): string | null {
-    if (platform === 'windows' || platform === 'linux') {
-      // Not supported yet
+  getDownloadUrlForPlatform(manifest: ReleaseManifest, platform: 'macos' | 'windows' | 'linux', arch: 'arm64' | 'intel' | 'x64' = 'arm64', fileType: 'dmg' | 'app' | 'msi' | 'exe' = 'dmg'): string | null {
+    if (platform === 'linux') {
+      // Linux not supported yet
       return null;
+    }
+
+    // For Windows, use x64 as the standard arch
+    if (platform === 'windows' && (arch === 'intel' || arch === 'arm64')) {
+      arch = 'x64';
     }
 
     const key = `${platform}_${arch}_${fileType}`;

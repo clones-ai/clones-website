@@ -103,7 +103,9 @@ export function DownloadButtons({ referralCode }: DownloadButtonsProps) {
       try {
         setIsLoading(true);
         setError(null);
-        const latestManifest = await releasesService.getLatestRelease();
+        // Get platform-specific manifest based on detected OS
+        const platform = os === 'Windows' ? 'windows' : os === 'macOS' ? 'macos' : undefined;
+        const latestManifest = await releasesService.getLatestRelease(platform);
         setManifest(latestManifest);
       } catch (err) {
         setError('Failed to load release information');
@@ -114,7 +116,7 @@ export function DownloadButtons({ referralCode }: DownloadButtonsProps) {
     };
 
     fetchLatestRelease();
-  }, []);
+  }, [os]);
 
   const handleDownload = (downloadUrl: string) => {
     if (isDownloading) return;
@@ -136,18 +138,47 @@ export function DownloadButtons({ referralCode }: DownloadButtonsProps) {
   };
 
   const getDownloadInfo = () => {
-    if (!manifest || os !== 'macOS') return null;
+    if (!manifest) return null;
 
-    const downloadUrl = releasesService.getDownloadUrlForPlatform(manifest, 'macos', arch, 'dmg');
-    const fileKey = `macos_${arch}_dmg`;
-    const fileInfo = manifest.files[fileKey];
+    if (os === 'macOS') {
+      const downloadUrl = releasesService.getDownloadUrlForPlatform(manifest, 'macos', arch, 'dmg');
+      const fileKey = `macos_${arch}_dmg`;
+      const fileInfo = manifest.files[fileKey];
 
-    return downloadUrl && fileInfo ? {
-      url: downloadUrl,
-      filename: fileInfo.filename,
-      size: releasesService.formatFileSize(fileInfo.size),
-      arch: fileInfo.arch
-    } : null;
+      return downloadUrl && fileInfo ? {
+        url: downloadUrl,
+        filename: fileInfo.filename,
+        size: releasesService.formatFileSize(fileInfo.size),
+        arch: fileInfo.arch,
+        platform: 'macOS'
+      } : null;
+    }
+
+    if (os === 'Windows') {
+      // Try MSI first, then EXE
+      let downloadUrl = releasesService.getDownloadUrlForPlatform(manifest, 'windows', 'x64', 'msi');
+      let fileKey = 'windows_x64_msi';
+      let fileType = 'MSI';
+
+      if (!downloadUrl) {
+        downloadUrl = releasesService.getDownloadUrlForPlatform(manifest, 'windows', 'x64', 'exe');
+        fileKey = 'windows_x64_exe';
+        fileType = 'EXE';
+      }
+
+      const fileInfo = manifest.files[fileKey];
+
+      return downloadUrl && fileInfo ? {
+        url: downloadUrl,
+        filename: fileInfo.filename,
+        size: releasesService.formatFileSize(fileInfo.size),
+        arch: 'x64',
+        platform: 'Windows',
+        fileType
+      } : null;
+    }
+
+    return null;
   };
 
   const deepLink = `${DEEPLINK_SCHEME}://onboard?ref=${referralCode}`;
@@ -192,14 +223,13 @@ export function DownloadButtons({ referralCode }: DownloadButtonsProps) {
     );
   }
 
-  // Desktop platforms - Linux/Windows coming soon
-  if (os === 'Linux' || os === 'Windows') {
-    const platformName = os === 'Linux' ? 'Linux' : 'Windows';
+  // Desktop platforms - Linux coming soon
+  if (os === 'Linux') {
     return (
       <div className="space-y-4">
         <div className="group relative w-full inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#1A1A1A] border border-amber-500/20 text-[#94A3B8] rounded-full cursor-not-allowed">
           <AlertCircle className="w-5 h-5 text-amber-400" />
-          <span className="font-medium">{platformName} support coming soon</span>
+          <span className="font-medium">Linux support coming soon</span>
         </div>
 
         <a
@@ -213,13 +243,14 @@ export function DownloadButtons({ referralCode }: DownloadButtonsProps) {
     );
   }
 
-  // macOS - No download available
+  // No download available
   if (!downloadInfo) {
+    const platformName = os === 'macOS' ? 'macOS' : os === 'Windows' ? 'Windows' : 'this platform';
     return (
       <div className="space-y-4">
         <div className="group relative w-full inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#1A1A1A] border border-amber-500/20 text-[#94A3B8] rounded-full cursor-not-allowed">
           <AlertCircle className="w-5 h-5 text-amber-400" />
-          <span className="font-medium">No release available for your architecture</span>
+          <span className="font-medium">No release available for {platformName}</span>
         </div>
 
         <a
@@ -252,32 +283,38 @@ export function DownloadButtons({ referralCode }: DownloadButtonsProps) {
           <>
             <Download className="relative w-5 h-5 z-10" />
             <div className="relative z-10 flex flex-col items-start">
-              <span className="font-medium">Download for macOS ({downloadInfo.arch})</span>
+              <span className="font-medium">
+                Download for {downloadInfo.platform}
+                {downloadInfo.platform === 'macOS' ? ` (${downloadInfo.arch})` : ''}
+                {downloadInfo.platform === 'Windows' && (downloadInfo as any).fileType ? ` (${(downloadInfo as any).fileType})` : ''}
+              </span>
               <span className="text-xs text-[#94A3B8]">v{manifest.version} • {downloadInfo.size}</span>
             </div>
           </>
         )}
       </button>
 
-      {/* Architecture selector */}
-      <div className="flex items-center justify-center gap-2 text-xs text-[#94A3B8]">
-        <span>Wrong architecture?</span>
-        <div className="flex gap-1">
-          <button
-            onClick={() => setArch('arm64')}
-            className={`px-2 py-1 rounded ${arch === 'arm64' ? 'bg-primary-500/20 text-primary-400' : 'hover:text-[#F8FAFC]'} transition-colors`}
-          >
-            Apple Silicon
-          </button>
+      {/* Architecture selector - only for macOS */}
+      {downloadInfo.platform === 'macOS' && (
+        <div className="flex items-center justify-center gap-2 text-xs text-[#94A3B8]">
+          <span>Wrong architecture?</span>
+          <div className="flex gap-1">
+            <button
+              onClick={() => setArch('arm64')}
+              className={`px-2 py-1 rounded ${arch === 'arm64' ? 'bg-primary-500/20 text-primary-400' : 'hover:text-[#F8FAFC]'} transition-colors`}
+            >
+              Apple Silicon
+            </button>
 
-          <button
-            onClick={() => setArch('intel')}
-            className={`px-2 py-1 rounded ${arch === 'intel' ? 'bg-primary-500/20 text-primary-400' : 'hover:text-[#F8FAFC]'} transition-colors`}
-          >
-            Intel
-          </button>
+            <button
+              onClick={() => setArch('intel')}
+              className={`px-2 py-1 rounded ${arch === 'intel' ? 'bg-primary-500/20 text-primary-400' : 'hover:text-[#F8FAFC]'} transition-colors`}
+            >
+              Intel
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       <a
         href={deepLink}
