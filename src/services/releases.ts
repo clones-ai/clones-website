@@ -21,7 +21,7 @@ class ReleasesService {
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   async getLatestRelease(platform?: 'macos' | 'windows'): Promise<ReleaseManifest | null> {
-    const platformPath = platform ? `/${platform}` : '';
+    const platformPath = platform === 'windows' ? '/windows' : '/macos';
     const cacheKey = `latest${platformPath}`;
     const cached = this.cache.get(cacheKey);
 

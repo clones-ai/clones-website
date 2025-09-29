@@ -130,13 +130,15 @@ export function InterfaceShowcase() {
               {/* Prominent CTA */}
               <RevealUp distance={2}>
                 <div className="text-center flex-shrink-0 px-8 py-4">
-                  <AnimatedButton
-                    variant="primary"
-                    size="lg"
-                    className="font-sans"
-                  >
-                    Launch Forge App <span className="text-sm">(soon)</span>
-                  </AnimatedButton>
+                  <a href="/download">
+                    <AnimatedButton
+                      variant="primary"
+                      size="lg"
+                      className="font-sans"
+                    >
+                      Launch Forge App - Testnet
+                    </AnimatedButton>
+                  </a>
                 </div>
               </RevealUp>
             </div>
