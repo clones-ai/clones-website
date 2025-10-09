@@ -41,13 +41,13 @@ export function useWalletAuth() {
 
     const [isSigning, setIsSigning] = useState(false);
     const signingRef = useRef(false);
-    
+
     // Circuit breaker for auth backend calls
     const authFailureCount = useRef(0);
     const lastAuthAttempt = useRef(0);
 
     const connected = isConnected && !!address && !!walletClient && status === 'connected';
-    const ready = connected && !isWalletClientLoadingRaw;
+    const ready = connected && !isWalletClientLoadingRaw && !isReconnecting;
     const loading = isReconnecting || isWalletClientLoadingRaw || (isConnected && !walletClient);
 
     const walletStatus = (() => {
@@ -75,9 +75,22 @@ export function useWalletAuth() {
      */
     const authenticateWallet = useCallback(
         async (ref?: string | null): Promise<AuthPayload> => {
+            console.log('🔐 authenticateWallet called', {
+                isConnected,
+                isReconnecting,
+                hasWalletClient: !!walletClient,
+                hasAddress: !!address,
+                status
+            });
+
+            if (isReconnecting) {
+                throw new Error('Wallet is reconnecting, please wait');
+            }
+
             if (!isConnected) {
                 throw new Error('Wallet not connected');
             }
+
             if (signingRef.current) {
                 throw new Error('Authentication already in progress');
             }
@@ -87,12 +100,16 @@ export function useWalletAuth() {
 
             try {
                 // Wait explicitly for wallet client init to avoid race conditions
+                console.log('⏳ Waiting for wallet client to be ready...');
                 await waitForTruthy(() => walletClient, { intervalMs: 80, timeoutMs: 8000 });
+                console.log('✅ Wallet client ready');
 
                 const ts = Date.now();
                 const message = buildSignMessage(ts, ref);
 
+                console.log('📝 Requesting signature from wallet...');
                 const signature = await signMessageAsync({ message });
+                console.log('✅ Signature received');
 
                 if (!address) {
                     throw new Error('Missing address after signing');
@@ -110,7 +127,7 @@ export function useWalletAuth() {
                 setIsSigning(false);
             }
         },
-        [address, isConnected, signMessageAsync, walletClient, buildSignMessage]
+        [address, isConnected, isReconnecting, signMessageAsync, walletClient, buildSignMessage, status]
     );
 
     /**
@@ -119,17 +136,17 @@ export function useWalletAuth() {
      */
     const sendAuthToBackend = useCallback(
         async (payload: AuthPayload, token?: string | null) => {
-            console.log('🚀 sendAuthToBackend called', { 
+            console.log('🚀 sendAuthToBackend called', {
                 address: payload.address,
                 hasToken: !!token,
                 timestamp: payload.timestamp,
-                failureCount: authFailureCount.current 
+                failureCount: authFailureCount.current
             });
 
             // Circuit breaker: prevent auth spam
             const now = Date.now();
             const timeSinceLastAttempt = now - lastAuthAttempt.current;
-            
+
             if (authFailureCount.current >= 3) {
                 const waitTime = Math.min(5000 * Math.pow(2, authFailureCount.current - 3), 30000); // Max 30s
                 if (timeSinceLastAttempt < waitTime) {
@@ -138,7 +155,7 @@ export function useWalletAuth() {
                     throw new Error(`Too many authentication attempts. Please wait ${waitSeconds} seconds before trying again.`);
                 }
             }
-            
+
             lastAuthAttempt.current = now;
 
             try {
@@ -158,18 +175,18 @@ export function useWalletAuth() {
                 // Use AuthService for authentication
                 const authService = createAuthService();
                 const result = await authService.authenticateWithWallet(authData);
-                
+
                 // Reset failure count on success
                 authFailureCount.current = 0;
                 console.log('✅ Authentication successful', result);
-                
+
                 return result;
             } catch (error) {
                 authFailureCount.current++;
-                console.error('❌ Authentication failed', { 
+                console.error('❌ Authentication failed', {
                     error,
                     failureCount: authFailureCount.current,
-                    timeSinceLastAttempt 
+                    timeSinceLastAttempt
                 });
                 throw error;
             }

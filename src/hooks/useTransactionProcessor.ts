@@ -136,6 +136,7 @@ const TransactionParamsSchema = z.object({
     amount: AmountStringSchema.optional(),
     poolAddress: AddressSchema.optional(),
     chainId: z.number().positive().optional(),
+    submissionId: z.string().optional(),
 });
 
 const SessionSchema = z.object({
@@ -177,7 +178,7 @@ const PreparedTransactionSchema = z.object({
 const TX_WHITELIST: Record<TransactionSession['transactionType'], { fn: string; abi: Abi }> = {
     fundPool: { fn: 'fund', abi: RewardPoolImplementationAbi as Abi },
     createFactory: { fn: 'createFactory', abi: RewardPoolFactoryAbi as Abi },
-    claimRewards: { fn: 'claimRewards', abi: ClaimRouterAbi as Abi },
+    claimRewards: { fn: 'payWithSig', abi: RewardPoolImplementationAbi as Abi },
     createAndFundPool: { fn: 'createAndFundPool', abi: RewardPoolFactoryAbi as Abi },
     withdrawPool: { fn: 'withdraw', abi: RewardPoolImplementationAbi as Abi },
 };
@@ -319,6 +320,7 @@ export interface TransactionSession {
         amount?: string;
         poolAddress?: string;
         chainId?: number;
+        submissionId?: string;
     };
     sessionToken: string;
     expiresAt: string;
@@ -968,7 +970,22 @@ const sideEffectHandlers: Record<TransactionState, SideEffectHandler> = {
                         }),
                         signal: controller.signal
                     });
-                    if (!response.ok) throw new Error('Failed to prepare transaction');
+                    console.log('response', response);
+
+                    if (!response.ok) {
+                        // Try to extract the error message from the API response
+                        let errorMessage = `Failed to prepare transaction: ${response.statusText}`;
+                        try {
+                            const errorData = await response.json();
+                            if (errorData?.error?.message) {
+                                errorMessage = errorData.error.message;
+                            }
+                        } catch (parseError) {
+                            // If parsing fails, we'll use the default error message
+                            console.warn('Failed to parse error response:', parseError);
+                        }
+                        throw new Error(errorMessage);
+                    }
 
                     if (controller.signal.aborted) return;
 
@@ -1019,7 +1036,7 @@ const ALL_ABIS = [RewardPoolFactoryAbi, RewardPoolImplementationAbi, ClaimRouter
 
 export const useTransactionProcessor = () => {
     const [searchParams] = useSearchParams();
-    const { address } = useAccount();
+    const { address, isConnected } = useAccount();
     const chainId = useChainId();
     const config = useConfig();
     const currentChain = config.chains.find(chain => chain.id === chainId);
@@ -1335,6 +1352,22 @@ export const useTransactionProcessor = () => {
 
         if (!tokenAddress || !spender || !state.sessionData?.transactionParams.amount) return;
 
+        // Require a connected wallet before attempting approval
+        if (!isConnected || !address) {
+            dispatch({
+                type: 'ERROR',
+                payload: {
+                    error: {
+                        title: 'Wallet not connected',
+                        message: 'Please connect your wallet to approve tokens.',
+                        code: 'E_WALLET_NOT_CONNECTED',
+                        category: 'user'
+                    }
+                }
+            });
+            return;
+        }
+
         // Prevent multiple approval attempts
         if (state.currentState !== 'NEEDS_APPROVAL') {
             console.warn('executeApproval called but not in NEEDS_APPROVAL state:', state.currentState);
@@ -1351,8 +1384,9 @@ export const useTransactionProcessor = () => {
             functionName: 'approve',
             args: [spender, parseUnits(state.sessionData.transactionParams.amount, tokenDecimals)],
             ...(address && { account: address }),
+            ...(chainId && { chainId }),
         });
-    }, [state.sessionData, state.currentState, writeContract, address, tokenDecimals, tokenAddress, spender]);
+    }, [state.sessionData, state.currentState, writeContract, address, isConnected, tokenDecimals, tokenAddress, spender, chainId, dispatch]);
 
     const executeTransaction = useCallback(() => {
         if (state.currentState !== 'READY_TO_EXECUTE' || isWritePending) {
@@ -1361,6 +1395,22 @@ export const useTransactionProcessor = () => {
         }
         if (!state.preparedTx) {
             console.error('preparedTx is null in executeTransaction');
+            return;
+        }
+
+        // Require a connected wallet before attempting main transaction
+        if (!isConnected || !address) {
+            dispatch({
+                type: 'ERROR',
+                payload: {
+                    error: {
+                        title: 'Wallet not connected',
+                        message: 'Please connect your wallet to execute the transaction.',
+                        code: 'E_WALLET_NOT_CONNECTED',
+                        category: 'user'
+                    }
+                }
+            });
             return;
         }
 
@@ -1381,8 +1431,8 @@ export const useTransactionProcessor = () => {
 
         // Security: Use only validated preparedTx data (never trust simulationRequest for execution)
         dispatch({ type: 'EXECUTE_TRANSACTION' });
-        writeContract(buildWriteParams(state.preparedTx, address));
-    }, [state.preparedTx, state.simulationRequest, state.currentState, isWritePending, address, currentChain, writeContract, dispatch]);
+        writeContract(buildWriteParams(state.preparedTx, address, chainId)); // Fix: Pass chainId
+    }, [state.preparedTx, state.simulationRequest, state.currentState, isWritePending, address, isConnected, chainId, currentChain, writeContract, dispatch]);
 
     // Handle approval confirmation and recheck allowance
     useEffect(() => {
