@@ -970,7 +970,6 @@ const sideEffectHandlers: Record<TransactionState, SideEffectHandler> = {
                         }),
                         signal: controller.signal
                     });
-                    console.log('response', response);
 
                     if (!response.ok) {
                         // Try to extract the error message from the API response
@@ -1431,7 +1430,7 @@ export const useTransactionProcessor = () => {
 
         // Security: Use only validated preparedTx data (never trust simulationRequest for execution)
         dispatch({ type: 'EXECUTE_TRANSACTION' });
-        writeContract(buildWriteParams(state.preparedTx, address, chainId)); // Fix: Pass chainId
+        writeContract(buildWriteParams(state.preparedTx, address, chainId));
     }, [state.preparedTx, state.simulationRequest, state.currentState, isWritePending, address, isConnected, chainId, currentChain, writeContract, dispatch]);
 
     // Handle approval confirmation and recheck allowance
