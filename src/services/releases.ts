@@ -21,7 +21,7 @@ class ReleasesService {
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   async getLatestRelease(platform?: 'macos' | 'windows'): Promise<ReleaseManifest | null> {
-    const platformPath = platform === 'windows' ? '/windows' : '/macos';
+    const platformPath = platform === 'windows' ? '/windows' : '/darwin';
     const cacheKey = `latest${platformPath}`;
     const cached = this.cache.get(cacheKey);
 
@@ -49,8 +49,9 @@ class ReleasesService {
     }
   }
 
-  async getSpecificRelease(version: string): Promise<ReleaseManifest | null> {
-    const cacheKey = `version-${version}`;
+  async getSpecificRelease(version: string, platform?: 'macos' | 'windows'): Promise<ReleaseManifest | null> {
+    const platformPath = platform === 'windows' ? '/windows' : '/darwin';
+    const cacheKey = `version-${version}${platformPath}`;
     const cached = this.cache.get(cacheKey);
 
     if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
@@ -58,7 +59,7 @@ class ReleasesService {
     }
 
     try {
-      const response = await fetch(`${TIGRIS_BASE_URL}/versions/${version}/version.json`);
+      const response = await fetch(`${TIGRIS_BASE_URL}/versions/${version}${platformPath}/version.json`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
