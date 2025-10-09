@@ -27,6 +27,7 @@ export default function ConnectPage() {
 
     // Latch to prevent duplicate auto-auth attempts
     const autoAuthStarted = useRef(false);
+    const stableReadyTimestamp = useRef<number>(0);
 
     const connectWallet = useCallback(async () => {
         try {
@@ -58,34 +59,73 @@ export default function ConnectPage() {
             console.error(err);
             const message = err instanceof Error ? err.message : 'Unknown error occurred';
             setError('Failed to connect wallet: ' + message);
+            // Reset the latch so user can retry auto-auth
+            autoAuthStarted.current = false;
         } finally {
             setConnecting(false);
         }
     }, [isConnected, ready, authenticateWallet, refCode, sendAuthToBackend, token, navigate, fromPage, sessionId]);
 
+    // Track when wallet becomes ready for stability check
+    const [isStable, setIsStable] = useState(false);
+
+    useEffect(() => {
+        if (ready && !isReconnecting) {
+            if (stableReadyTimestamp.current === 0) {
+                console.log('Wallet ready, starting stability timer...');
+                stableReadyTimestamp.current = Date.now();
+                setIsStable(false);
+
+                // Wait 300ms for wallet to stabilize before allowing auto-auth
+                const timer = setTimeout(() => {
+                    console.log('Wallet stable, ready for auto-auth');
+                    setIsStable(true);
+                }, 300);
+
+                return () => clearTimeout(timer);
+            }
+        } else {
+            stableReadyTimestamp.current = 0;
+            setIsStable(false);
+        }
+    }, [ready, isReconnecting]);
+
+    // Auto-open connect modal if not connected
     useEffect(() => {
         if (token && !isConnected && !isReconnecting && openConnectModal) {
+            console.log('Auto-opening connect modal...');
             openConnectModal();
         }
     }, [token, isConnected, isReconnecting, openConnectModal]);
 
+    // Auto-authenticate once wallet is connected AND stable
     useEffect(() => {
         if (
             token &&
             isConnected &&
+            !isReconnecting && // Wait for reconnection to complete
             ready &&
+            isStable && // Wait for stability period
             !connecting &&
             !success &&
             !error &&
             !autoAuthStarted.current
         ) {
+            console.log('Starting auto-authentication...', {
+                isConnected,
+                isReconnecting,
+                ready,
+                isStable
+            });
             autoAuthStarted.current = true;
             void connectWallet();
         }
     }, [
         token,
         isConnected,
+        isReconnecting,
         ready,
+        isStable,
         connecting,
         success,
         error,
@@ -150,20 +190,26 @@ export default function ConnectPage() {
                     <div className={`inline-flex items-center justify-center gap-3 px-6 py-3 ultra-premium-glass-card border rounded-full ${ready ? 'border-green-500/30' : 'border-yellow-500/30'}`}>
                         <div className={`w-2 h-2 rounded-full ${ready ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-spin'}`} />
                         <span className="text-text-primary font-medium font-system">
-                            {isReconnecting ? 'Reconnecting...' : ready ? `${walletName} Connected` : 'Preparing Wallet...'}
+                            {isReconnecting ? 'Reconnecting Wallet...' : ready ? `${walletName} Connected` : 'Preparing Wallet...'}
                         </span>
                     </div>
 
+                    {isReconnecting && (
+                        <p className="text-text-secondary text-sm">
+                            Please wait while we establish a connection with your wallet...
+                        </p>
+                    )}
+
                     <AnimatedButton
                         onClick={connectWallet}
-                        disabled={connecting || !ready}
+                        disabled={connecting || !ready || isReconnecting}
                         variant="primary"
                         icon={Shield}
-                        loading={connecting}
+                        loading={connecting || isReconnecting}
                         className="w-full font-system"
                         size="lg"
                     >
-                        {connecting ? 'Check Wallet...' : 'Sign & Authenticate'}
+                        {isReconnecting ? 'Reconnecting...' : connecting ? 'Check Wallet...' : 'Sign & Authenticate'}
                     </AnimatedButton>
                 </div>
             );

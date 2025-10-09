@@ -117,17 +117,31 @@ export function toUserError(
             }
             case 'SecurityViolation': { // SecurityViolation(string check)
                 const check = args?.[0] as string | undefined;
+                let title = 'Security violation';
                 let message = 'Security checks failed.';
-                if (check?.includes('token_transfer')) message = 'Token rejected (fee-on-transfer or non-compliant).';
-                if (check?.includes('permit')) message = 'Permit signature failed. Try regular approval.';
-                if (check?.includes('signature')) message = 'Invalid publisher/user signature.';
-                if (check?.includes('deadline')) message = 'Signature deadline exceeded.';
+
+                if (check?.includes('token_transfer')) {
+                    message = 'Token rejected (fee-on-transfer or non-compliant).';
+                } else if (check?.includes('permit')) {
+                    message = 'Permit signature failed. Try regular approval.';
+                } else if (check?.includes('signature')) {
+                    message = 'Invalid publisher/user signature.';
+                } else if (check?.includes('deadline')) {
+                    message = 'Signature deadline exceeded.';
+                } else if (check?.includes('rate_limit')) {
+                    title = 'Rate limit exceeded';
+                    message = 'Too many claims in this block. Please try again in the next block.';
+                } else if (check?.includes('insufficient_allowance')) {
+                    title = 'Insufficient allowance';
+                    message = 'Please approve the contract to spend your tokens first.';
+                }
+
                 return {
-                    title: 'Security violation',
+                    title,
                     message,
                     code: 'E_SECURITY',
                     category: 'contract',
-                    context: { name, args },
+                    context: { name, args, check },
                 };
             }
             case 'SafeERC20FailedOperation': { // (address token)
