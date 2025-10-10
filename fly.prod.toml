@@ -11,11 +11,11 @@ primary_region = 'lax'
   [build.args]
     VITE_API_URL = "https://api.clones-ai.com"
     VITE_AUTH_ENDPOINT = "/api/v1/wallet/connect"
-    VITE_DESKTOP_SCHEME = "clones-prod"
+    VITE_DESKTOP_SCHEME = "clones"
     VITE_BASESCAN_BASE_URL = "https://basescan.org/"
     VITE_FAUCET_CONTRACT_ADDRESS = "0x6Beb3735FC332CA352301ac515AaB3a3b5160878"
     VITE_ENABLE_ANALYTICS = "true"
-    VITE_WALLETCONNECT_PROJECT_ID= "f6f818cce9847f688605012eaaf4de8a"
+    VITE_WALLETCONNECT_PROJECT_ID= "89f4b135c690defd963fb12a93b57e1c"
 
 [env]
   # Runtime environment variables (if needed)
