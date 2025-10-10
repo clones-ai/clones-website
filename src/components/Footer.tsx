@@ -9,7 +9,7 @@ export default function Footer({ isHomePage = false }: FooterProps) {
       <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-6 relative z-10">
           {/* Main Footer Content */}
-          <div className={`grid md:grid-cols-3 gap-6 mb-4`}>
+          <div className={`grid md:grid-cols-4 gap-6 mb-4`}>
             {/* Platform Links */}
             <div className="text-center">
               <h4 className="text-text-primary font-semibold mb-3 font-sans">Platform</h4>
@@ -44,6 +44,37 @@ export default function Footer({ isHomePage = false }: FooterProps) {
                   target="_blank"
                   rel="noopener noreferrer" className="footer-link" aria-label="Visit GitHub">
                   GitHub
+                  <svg className="inline w-3 h-3 ml-1 align-baseline" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a></li>
+              </ul>
+            </div>
+
+            {/* Token Links */}
+            <div className="text-center">
+              <h4 className="text-text-primary font-semibold mb-3 font-sans">Analytics</h4>
+              <ul className="space-y-2 text-sm">
+                <li><a href="https://basescan.org/token/0xaadd98ad4660008c917c6fe7286bc54b2eef894d"
+                  target="_blank"
+                  rel="noopener noreferrer" className="footer-link" aria-label="View on BaseScan">
+                  BaseScan
+                  <svg className="inline w-3 h-3 ml-1 align-baseline" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a></li>
+                <li><a href="https://www.coingecko.com/coins/clones"
+                  target="_blank"
+                  rel="noopener noreferrer" className="footer-link" aria-label="View on CoinGecko">
+                  CoinGecko
+                  <svg className="inline w-3 h-3 ml-1 align-baseline" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a></li>
+                <li><a href="https://dex.coinmarketcap.com/token/base/0xaadd98ad4660008c917c6fe7286bc54b2eef894d/"
+                  target="_blank"
+                  rel="noopener noreferrer" className="footer-link" aria-label="View on CoinMarketCap">
+                  CoinMarketCap
                   <svg className="inline w-3 h-3 ml-1 align-baseline" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
