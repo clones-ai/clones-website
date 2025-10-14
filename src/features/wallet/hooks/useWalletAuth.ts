@@ -31,7 +31,6 @@ export type AuthPayload = {
     signature: `0x${string}`;
     timestamp: number;
     message: string;
-    ref?: string;
 };
 
 export function useWalletAuth() {
@@ -64,17 +63,16 @@ export function useWalletAuth() {
     /**
      * Build the exact message to sign. Keep formatting stable for backend verification.
      */
-    const buildSignMessage = useCallback((timestamp: number, ref?: string | null) => {
+    const buildSignMessage = useCallback((timestamp: number) => {
         const header = 'Clones desktop';
-        const base = `${header}\nnonce: ${timestamp}`;
-        return ref ? `${base}\nref: ${ref}` : base;
+        return `${header}\nnonce: ${timestamp}`;
     }, []);
 
     /**
      * Trigger the wallet signature once the wallet client is truly ready.
      */
     const authenticateWallet = useCallback(
-        async (ref?: string | null): Promise<AuthPayload> => {
+        async (): Promise<AuthPayload> => {
             console.log('🔐 authenticateWallet called', {
                 isConnected,
                 isReconnecting,
@@ -105,7 +103,7 @@ export function useWalletAuth() {
                 console.log('✅ Wallet client ready');
 
                 const ts = Date.now();
-                const message = buildSignMessage(ts, ref);
+                const message = buildSignMessage(ts);
 
                 console.log('📝 Requesting signature from wallet...');
                 const signature = await signMessageAsync({ message });
@@ -120,7 +118,6 @@ export function useWalletAuth() {
                     signature,
                     timestamp: ts,
                     message,
-                    ref: ref ?? undefined,
                 };
             } finally {
                 signingRef.current = false;

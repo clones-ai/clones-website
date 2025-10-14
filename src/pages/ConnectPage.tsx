@@ -21,7 +21,6 @@ export default function ConnectPage() {
     const walletName = useWalletName();
 
     const token = searchParams.get('token') || '';
-    const refCode = searchParams.get('ref');
     const fromPage = searchParams.get('from');
     const sessionId = searchParams.get('sessionId');
 
@@ -42,7 +41,7 @@ export default function ConnectPage() {
                 throw new Error('Wallet is not ready for authentication. Please wait a moment and try again.');
             }
 
-            const authData = await authenticateWallet(refCode);
+            const authData = await authenticateWallet();
             await sendAuthToBackend(authData, token);
 
             setSuccess(true);
@@ -64,7 +63,7 @@ export default function ConnectPage() {
         } finally {
             setConnecting(false);
         }
-    }, [isConnected, ready, authenticateWallet, refCode, sendAuthToBackend, token, navigate, fromPage, sessionId]);
+    }, [isConnected, ready, authenticateWallet, sendAuthToBackend, token, navigate, fromPage, sessionId]);
 
     // Track when wallet becomes ready for stability check
     const [isStable, setIsStable] = useState(false);

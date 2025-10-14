@@ -29,8 +29,8 @@ const TermsConditionsPage = React.lazy(() =>
 const FaucetPage = React.lazy(() =>
   import(/* webpackChunkName: "faucet" */ './features/faucet/FaucetPage')
 );
-const ReferralPage = React.lazy(() =>
-  import(/* webpackChunkName: "referral" */ './features/desktop/ReferralPage')
+const DownloadPage = React.lazy(() =>
+  import(/* webpackChunkName: "download" */ './features/desktop/DownloadPage')
 );
 const ConnectPage = React.lazy(() =>
   import(/* webpackChunkName: "connect" */ './pages/ConnectPage')
@@ -68,8 +68,7 @@ function AppContent() {
               <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
               <Route path="/terms-conditions" element={<TermsConditionsPage />} />
               <Route path="/faucet" element={<FaucetPage />} />
-              <Route path="/download" element={<ReferralPage />} />
-              <Route path="/download/:referralCode" element={<ReferralPage />} />
+              <Route path="/download" element={<DownloadPage />} />
               <Route path="/connect" element={<ConnectPage />} />
               <Route path="/wallet/transaction" element={<TransactionPage />} />
               <Route path="*" element={<ErrorPage />} />
