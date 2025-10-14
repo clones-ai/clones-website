@@ -25,16 +25,16 @@ type OS = 'Windows' | 'macOS' | 'Linux' | 'iOS' | 'Android' | 'Unknown';
 
 function getOS(): OS {
   const userAgent = window.navigator.userAgent;
-  
+
   // Mobile detection first
   if (/iPhone|iPad|iPod/i.test(userAgent)) return "iOS";
   if (/Android/i.test(userAgent)) return "Android";
-  
+
   // Desktop detection
   if (userAgent.indexOf("Win") !== -1) return "Windows";
   if (userAgent.indexOf("Mac") !== -1) return "macOS";
   if (userAgent.indexOf("Linux") !== -1) return "Linux";
-  
+
   return "Unknown";
 }
 
@@ -74,11 +74,7 @@ async function getArchitecture(): Promise<'arm64' | 'intel'> {
   return 'intel';
 }
 
-interface DownloadButtonsProps {
-  referralCode?: string;
-}
-
-export function DownloadButtons({ referralCode }: DownloadButtonsProps) {
+export function DownloadButtons() {
   const [os, setOs] = useState<OS>('Unknown');
   const [arch, setArch] = useState<'arm64' | 'intel'>('arm64');
   const [manifest, setManifest] = useState<ReleaseManifest | null>(null);
@@ -181,7 +177,7 @@ export function DownloadButtons({ referralCode }: DownloadButtonsProps) {
     return null;
   };
 
-  const deepLink = `${DEEPLINK_SCHEME}://onboard?ref=${referralCode}`;
+  const deepLink = `${DEEPLINK_SCHEME}://onboard`;
   const downloadInfo = getDownloadInfo();
 
   // Loading state

@@ -1,2 +1,2 @@
-export * from './ReferralPage';
+export * from './DownloadPage';
 export * from './DownloadButtons';
