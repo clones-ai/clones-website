@@ -136,7 +136,7 @@ export function InterfaceShowcase() {
                       size="lg"
                       className="font-sans"
                     >
-                      Launch Forge App - Testnet
+                      Launch Forge App
                     </AnimatedButton>
                   </a>
                 </div>

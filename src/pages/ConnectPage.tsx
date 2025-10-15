@@ -27,6 +27,10 @@ export default function ConnectPage() {
     // Latch to prevent duplicate auto-auth attempts
     const autoAuthStarted = useRef(false);
     const stableReadyTimestamp = useRef<number>(0);
+    
+    // Fallback mechanism for stuck isReconnecting state
+    const reconnectingStartTime = useRef(0);
+    const [showReconnectingTimeout, setShowReconnectingTimeout] = useState(false);
 
     const connectWallet = useCallback(async () => {
         try {
@@ -89,20 +93,47 @@ export default function ConnectPage() {
         }
     }, [ready, isReconnecting]);
 
-    // Auto-open connect modal if not connected
+    // Monitor isReconnecting timeout and show fallback
     useEffect(() => {
-        if (token && !isConnected && !isReconnecting && openConnectModal) {
+        if (isReconnecting) {
+            if (reconnectingStartTime.current === 0) {
+                reconnectingStartTime.current = Date.now();
+                setShowReconnectingTimeout(false);
+                console.log('[ConnectPage] Reconnection started, monitoring...');
+            }
+        } else {
+            if (reconnectingStartTime.current > 0) {
+                const duration = Date.now() - reconnectingStartTime.current;
+                console.log(`[ConnectPage] Reconnection completed in ${duration}ms`);
+                reconnectingStartTime.current = 0;
+                setShowReconnectingTimeout(false);
+            }
+        }
+
+        // Show timeout warning and provide manual override after 15 seconds
+        if (isReconnecting && reconnectingStartTime.current > 0) {
+            const duration = Date.now() - reconnectingStartTime.current;
+            if (duration > 15000 && !showReconnectingTimeout) {
+                console.warn(`[ConnectPage] Reconnection timeout (${duration}ms). Showing manual override.`);
+                setShowReconnectingTimeout(true);
+            }
+        }
+    }, [isReconnecting, showReconnectingTimeout]);
+
+    // Auto-open connect modal if not connected (but allow override if reconnecting too long)
+    useEffect(() => {
+        if (token && !isConnected && (!isReconnecting || showReconnectingTimeout) && openConnectModal) {
             console.log('Auto-opening connect modal...');
             openConnectModal();
         }
-    }, [token, isConnected, isReconnecting, openConnectModal]);
+    }, [token, isConnected, isReconnecting, showReconnectingTimeout, openConnectModal]);
 
     // Auto-authenticate once wallet is connected AND stable
     useEffect(() => {
         if (
             token &&
             isConnected &&
-            !isReconnecting && // Wait for reconnection to complete
+            (!isReconnecting || showReconnectingTimeout) && // Wait for reconnection or allow timeout override
             ready &&
             isStable && // Wait for stability period
             !connecting &&
@@ -123,6 +154,7 @@ export default function ConnectPage() {
         token,
         isConnected,
         isReconnecting,
+        showReconnectingTimeout,
         ready,
         isStable,
         connecting,
@@ -189,26 +221,55 @@ export default function ConnectPage() {
                     <div className={`inline-flex items-center justify-center gap-3 px-6 py-3 ultra-premium-glass-card border rounded-full ${ready ? 'border-green-500/30' : 'border-yellow-500/30'}`}>
                         <div className={`w-2 h-2 rounded-full ${ready ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-spin'}`} />
                         <span className="text-text-primary font-medium font-system">
-                            {isReconnecting ? 'Reconnecting Wallet...' : ready ? `${walletName} Connected` : 'Preparing Wallet...'}
+                            {isReconnecting ? 
+                            showReconnectingTimeout ? 'Reconnection Taking Long...' : 'Reconnecting Wallet...' 
+                            : ready ? `${walletName} Connected` : 'Preparing Wallet...'}
                         </span>
                     </div>
 
                     {isReconnecting && (
                         <p className="text-text-secondary text-sm">
-                            Please wait while we establish a connection with your wallet...
+                            {showReconnectingTimeout ? 
+                                'Connection is taking longer than expected. You can try reconnecting manually.' : 
+                                'Please wait while we establish a connection with your wallet...'}
                         </p>
+                    )}
+
+                    {showReconnectingTimeout && (
+                        <div className="mb-4">
+                            <AnimatedButton
+                                onClick={() => {
+                                    // Force refresh/reconnect by opening modal
+                                    setShowReconnectingTimeout(false);
+                                    reconnectingStartTime.current = 0;
+                                    openConnectModal?.();
+                                }}
+                                variant="secondary"
+                                size="sm"
+                                className="mr-3"
+                            >
+                                Reconnect Manually
+                            </AnimatedButton>
+                            <AnimatedButton
+                                onClick={() => window.location.reload()}
+                                variant="secondary"
+                                size="sm"
+                            >
+                                Refresh Page
+                            </AnimatedButton>
+                        </div>
                     )}
 
                     <AnimatedButton
                         onClick={connectWallet}
-                        disabled={connecting || !ready || isReconnecting}
+                        disabled={connecting || !ready || (isReconnecting && !showReconnectingTimeout)}
                         variant="primary"
                         icon={Shield}
-                        loading={connecting || isReconnecting}
+                        loading={connecting || (isReconnecting && !showReconnectingTimeout)}
                         className="w-full font-system"
                         size="lg"
                     >
-                        {isReconnecting ? 'Reconnecting...' : connecting ? 'Check Wallet...' : 'Sign & Authenticate'}
+                        {isReconnecting && !showReconnectingTimeout ? 'Reconnecting...' : connecting ? 'Check Wallet...' : 'Sign & Authenticate'}
                     </AnimatedButton>
                 </div>
             );

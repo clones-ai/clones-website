@@ -1,13 +1,13 @@
 import React from 'react';
-import { WagmiProvider, createConfig, http } from 'wagmi';
+import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
     RainbowKitProvider,
     lightTheme,
-    getDefaultConfig,
 } from '@rainbow-me/rainbowkit';
-import { base, baseSepolia } from 'wagmi/chains';
 import { AuthProvider } from '../auth/AuthProvider';
+import ConnectorCompatibilityGuard from './ConnectorCompatibilityGuard';
+import { wagmiConfig } from './wagmiConfig';
 
 // Import RainbowKit styles once
 import '@rainbow-me/rainbowkit/styles.css';
@@ -17,25 +17,15 @@ interface WalletProviderProps {
 }
 
 /**
- * Use getDefaultConfig for better compatibility with RainbowKit v2 + Wagmi v2
- * This should resolve connector.getChainId issues
+ * QueryClient created outside component to prevent recreation
+ * Optimized retry settings to reduce connection delays
  */
-export const config = getDefaultConfig({
-    appName: 'Clones Desktop',
-    projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo-project-id',
-    chains: [base, baseSepolia],
-    transports: {
-        [base.id]: http(),
-        [baseSepolia.id]: http(),
-    },
-    ssr: false,
-});
-
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            retry: 3,
-            retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+            retry: 2, // Reduced from 3
+            retryDelay: attemptIndex => Math.min(500 * 2 ** attemptIndex, 10000), // Faster retries
+            staleTime: 1000 * 60 * 5, // 5 minutes
         },
         mutations: {
             retry: 1,
@@ -45,7 +35,7 @@ const queryClient = new QueryClient({
 
 export default function WalletProvider({ children }: WalletProviderProps) {
     return (
-        <WagmiProvider config={config}>
+        <WagmiProvider config={wagmiConfig}>
             <QueryClientProvider client={queryClient}>
                 <RainbowKitProvider
                     modalSize="compact"
@@ -56,6 +46,7 @@ export default function WalletProvider({ children }: WalletProviderProps) {
                     })}
                 >
                     <AuthProvider>
+                        <ConnectorCompatibilityGuard />
                         {children}
                     </AuthProvider>
                 </RainbowKitProvider>
