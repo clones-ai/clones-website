@@ -14,7 +14,7 @@ interface ReleaseManifest {
 
 const TIGRIS_BASE_URL = import.meta.env.DEV
   ? '/tigris'  // Use proxy in development
-  : 'https://clones-desktop-release-test.t3.storage.dev';  // Custom domain configured
+  : 'https://clones-desktop-release-prod.t3.storage.dev';  // Custom domain configured
 
 class ReleasesService {
   private cache: Map<string, { data: ReleaseManifest; timestamp: number }> = new Map();

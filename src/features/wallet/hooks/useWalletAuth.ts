@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import { useAccount, useWalletClient, useSignMessage } from 'wagmi';
 
 /**
@@ -44,10 +44,42 @@ export function useWalletAuth() {
     // Circuit breaker for auth backend calls
     const authFailureCount = useRef(0);
     const lastAuthAttempt = useRef(0);
+    
+    // Circuit breaker for isReconnecting timeout
+    const reconnectingStartTime = useRef(0);
+    const [forceReady, setForceReady] = useState(false);
 
     const connected = isConnected && !!address && !!walletClient && status === 'connected';
-    const ready = connected && !isWalletClientLoadingRaw && !isReconnecting;
+    const baseReady = connected && !isWalletClientLoadingRaw && !isReconnecting;
+    const ready = baseReady || (connected && forceReady); // Allow force override
     const loading = isReconnecting || isWalletClientLoadingRaw || (isConnected && !walletClient);
+
+    // Monitor isReconnecting timeout and force ready state after threshold
+    useEffect(() => {
+        if (isReconnecting) {
+            if (reconnectingStartTime.current === 0) {
+                reconnectingStartTime.current = Date.now();
+                setForceReady(false);
+                console.log('[useWalletAuth] Reconnection started, monitoring timeout...');
+            }
+        } else {
+            if (reconnectingStartTime.current > 0) {
+                const duration = Date.now() - reconnectingStartTime.current;
+                console.log(`[useWalletAuth] Reconnection completed in ${duration}ms`);
+                reconnectingStartTime.current = 0;
+                setForceReady(false);
+            }
+        }
+
+        // Force ready state if reconnecting too long and we have basic connectivity
+        if (isReconnecting && reconnectingStartTime.current > 0 && connected) {
+            const duration = Date.now() - reconnectingStartTime.current;
+            if (duration > 10000 && !forceReady) { // 10 seconds timeout
+                console.warn(`[useWalletAuth] Reconnection timeout (${duration}ms). Force enabling ready state.`);
+                setForceReady(true);
+            }
+        }
+    }, [isReconnecting, connected, forceReady]);
 
     const walletStatus = (() => {
         if (isReconnecting) return 'reconnecting';

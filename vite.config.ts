@@ -37,7 +37,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000
   },
   optimizeDeps: {
-    include: ['framer-motion', 'lenis', 'react', 'react-dom', 'react-router-dom', '@splinetool/viewer'],
+    include: ['framer-motion', 'lenis', 'react', 'react-dom', 'react-router-dom', '@splinetool/viewer', 'wagmi', '@rainbow-me/rainbowkit', 'viem'],
     exclude: []
   },
   server: {

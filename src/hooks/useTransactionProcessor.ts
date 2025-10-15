@@ -97,8 +97,8 @@
 import { useReducer, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../features/auth/hooks';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSimulateContract, useReadContract, useChainId, useConfig, useTransactionConfirmations } from 'wagmi';
-import { parseEther, type Abi, type AbiFunction, parseUnits, isAddress, getAbiItem, encodeFunctionData } from 'viem';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSimulateContract, useReadContract, useChainId, useConfig, useTransactionConfirmations, useConnectorClient } from 'wagmi';
+import { parseEther, type Abi, type AbiFunction, parseUnits, isAddress, getAbiItem, encodeFunctionData, createWalletClient, custom } from 'viem';
 import { z } from 'zod';
 
 import { toUserError, type UserFacingError } from '../features/wallet/evmErrorDecoder';
@@ -175,12 +175,12 @@ const PreparedTransactionSchema = z.object({
 });
 
 // Transaction whitelist for security
-const TX_WHITELIST: Record<TransactionSession['transactionType'], { fn: string; abi: Abi }> = {
-    fundPool: { fn: 'fund', abi: RewardPoolImplementationAbi as Abi },
-    createFactory: { fn: 'createFactory', abi: RewardPoolFactoryAbi as Abi },
-    claimRewards: { fn: 'payWithSig', abi: RewardPoolImplementationAbi as Abi },
-    createAndFundPool: { fn: 'createAndFundPool', abi: RewardPoolFactoryAbi as Abi },
-    withdrawPool: { fn: 'withdraw', abi: RewardPoolImplementationAbi as Abi },
+const TX_WHITELIST: Record<TransactionSession['transactionType'], { fn: string[]; abi: Abi }> = {
+    fundPool: { fn: ['fund'], abi: RewardPoolImplementationAbi as Abi },
+    createFactory: { fn: ['createFactory'], abi: RewardPoolFactoryAbi as Abi },
+    claimRewards: { fn: ['payWithSig', 'payWithSigAndReferrals'], abi: RewardPoolImplementationAbi as Abi },
+    createAndFundPool: { fn: ['createAndFundPool'], abi: RewardPoolFactoryAbi as Abi },
+    withdrawPool: { fn: ['withdraw'], abi: RewardPoolImplementationAbi as Abi },
 };
 
 function assertPreparedMatchesType(session: TransactionSession, preparedTx: PreparedTransaction): void {
@@ -189,21 +189,21 @@ function assertPreparedMatchesType(session: TransactionSession, preparedTx: Prep
         throw new Error(`Unknown transaction type: ${session.transactionType}`);
     }
 
-    if (preparedTx.functionName !== rule.fn) {
-        throw new Error(`Function name mismatch for type ${session.transactionType}: expected ${rule.fn}, got ${preparedTx.functionName}`);
+    if (!rule.fn.includes(preparedTx.functionName)) {
+        throw new Error(`Function name mismatch for type ${session.transactionType}: expected one of [${rule.fn.join(', ')}], got ${preparedTx.functionName}`);
     }
 
     // Validate the whitelisted function exists in the whitelisted ABI
-    const whitelistedFunction = getAbiItem({ abi: rule.abi, name: rule.fn });
+    const whitelistedFunction = getAbiItem({ abi: rule.abi, name: preparedTx.functionName });
     if (!whitelistedFunction || whitelistedFunction.type !== 'function') {
-        throw new Error(`Whitelisted function ${rule.fn} not found in ABI for type ${session.transactionType}`);
+        throw new Error(`Whitelisted function ${preparedTx.functionName} not found in ABI for type ${session.transactionType}`);
     }
 
     // Validate args count matches expected inputs
     const expectedArgCount = whitelistedFunction.inputs?.length ?? 0;
     const providedArgCount = Array.isArray(preparedTx.args) ? preparedTx.args.length : 0;
     if (providedArgCount !== expectedArgCount) {
-        throw new Error(`Args length mismatch for ${rule.fn}: expected ${expectedArgCount}, got ${providedArgCount}`);
+        throw new Error(`Args length mismatch for ${preparedTx.functionName}: expected ${expectedArgCount}, got ${providedArgCount}`);
     }
 
     // Final validation: try to encode with whitelisted ABI
@@ -211,7 +211,7 @@ function assertPreparedMatchesType(session: TransactionSession, preparedTx: Prep
     try {
         encodeFunctionData({
             abi: rule.abi,
-            functionName: rule.fn as any,
+            functionName: preparedTx.functionName as any,
             args: preparedTx.args as any
         });
     } catch (error) {
@@ -1040,6 +1040,7 @@ export const useTransactionProcessor = () => {
     const config = useConfig();
     const currentChain = config.chains.find(chain => chain.id === chainId);
     const { isAuthenticated, secureCall, establishSessionFromTransaction } = useAuth();
+    const { data: connectorClient } = useConnectorClient();
 
     const [state, dispatch] = useReducer(transactionReducer, initialState);
     const isAuthenticatingRef = useRef(false);
@@ -1341,7 +1342,7 @@ export const useTransactionProcessor = () => {
         };
     }, [state, searchParams, isAuthenticated, sideEffectsMiddleware, establishSessionFromTransaction, secureCall, estimateGas, lastAuthAttempt, authFailureCount]);
 
-    const executeApproval = useCallback(() => {
+    const executeApproval = useCallback(async () => {
         // NOTE on Approval Amount:
         // We currently approve the exact transaction amount for maximum security,
         // preventing potential allowance abuse. If an "infinite approval" feature is
@@ -1373,19 +1374,49 @@ export const useTransactionProcessor = () => {
             return;
         }
 
+        // Determine if the active connector is compatible (has getChainId)
+        const anyClient: any = connectorClient as any;
+        const activeConnector: any = anyClient?.transport?.connector ?? anyClient?.connector;
+        const hasCompatibleConnector = !!(activeConnector && typeof activeConnector.getChainId === 'function');
+
         dispatch({ type: 'START_APPROVAL' });
+
+        if (!hasCompatibleConnector && typeof (window as any).ethereum !== 'undefined' && currentChain) {
+            try {
+                const walletClient = createWalletClient({
+                    account: address as `0x${string}`,
+                    chain: currentChain as any,
+                    transport: custom((window as any).ethereum)
+                });
+
+                const txHash = await walletClient.writeContract({
+                    address: tokenAddress,
+                    abi: [{ name: 'approve', type: 'function', stateMutability: 'nonpayable', inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }] }],
+                    functionName: 'approve',
+                    args: [spender, parseUnits(state.sessionData.transactionParams.amount, tokenDecimals)],
+                    chain: currentChain as any
+                });
+
+                // Drive the existing state machine + receipt watcher
+                dispatch({ type: 'APPROVAL_SUBMITTED', payload: { txHash } });
+                return;
+            } catch (fallbackErr) {
+                // Let normal error handler convert to user-facing error
+                dispatchUserError(dispatch, fallbackErr, 'approval', updateSessionStatus);
+                return;
+            }
+        }
+
+        // Default path via wagmi writeContract
         writeContract({
             address: tokenAddress,
-            // Note: No 'outputs' field for maximum token compatibility
-            // Some tokens (USDT, BNB, etc.) don't return bool from approve()
-            // Omitting outputs prevents ABI decode errors with non-standard tokens
             abi: [{ name: 'approve', type: 'function', stateMutability: 'nonpayable', inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }] }],
             functionName: 'approve',
             args: [spender, parseUnits(state.sessionData.transactionParams.amount, tokenDecimals)],
             ...(address && { account: address }),
             ...(chainId && { chainId }),
         });
-    }, [state.sessionData, state.currentState, writeContract, address, isConnected, tokenDecimals, tokenAddress, spender, chainId, dispatch]);
+    }, [state.sessionData, state.currentState, writeContract, address, isConnected, tokenDecimals, tokenAddress, spender, chainId, dispatch, connectorClient, currentChain, updateSessionStatus]);
 
     const executeTransaction = useCallback(() => {
         if (state.currentState !== 'READY_TO_EXECUTE' || isWritePending) {
