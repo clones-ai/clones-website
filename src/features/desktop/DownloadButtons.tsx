@@ -246,7 +246,7 @@ export function DownloadButtons() {
       <div className="space-y-4">
         <div className="group relative w-full inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#1A1A1A] border border-amber-500/20 text-[#94A3B8] rounded-full cursor-not-allowed">
           <AlertCircle className="w-5 h-5 text-amber-400" />
-          <span className="font-medium">No release available for {platformName}</span>
+          <span className="font-medium">No release available for {platformName} yet, but soon</span>
         </div>
 
         <a
