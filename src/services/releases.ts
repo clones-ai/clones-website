@@ -78,21 +78,29 @@ class ReleasesService {
     }
   }
 
-  getDownloadUrlForPlatform(manifest: ReleaseManifest, platform: 'macos' | 'windows' | 'linux', arch: 'arm64' | 'intel' | 'x64' = 'arm64', fileType: 'dmg' | 'app' | 'msi' | 'exe' = 'dmg'): string | null {
+  getDownloadUrlForPlatform(manifest: ReleaseManifest, platform: 'macos' | 'windows' | 'linux', arch?: 'x64', fileType?: 'dmg' | 'msi' | 'exe'): string | null {
     if (platform === 'linux') {
       // Linux not supported yet
       return null;
     }
 
-    // For Windows, use x64 as the standard arch
-    if (platform === 'windows' && (arch === 'intel' || arch === 'arm64')) {
-      arch = 'x64';
+    if (platform === 'macos') {
+      // macOS only has universal binary now
+      const key = 'macos_universal_dmg';
+      const file = manifest.files[key];
+      return file?.url || null;
     }
 
-    const key = `${platform}_${arch}_${fileType}`;
-    const file = manifest.files[key];
+    if (platform === 'windows') {
+      // Windows uses x64 architecture
+      const windowsArch = arch || 'x64';
+      const windowsFileType = fileType || 'msi';
+      const key = `windows_${windowsArch}_${windowsFileType}`;
+      const file = manifest.files[key];
+      return file?.url || null;
+    }
 
-    return file?.url || null;
+    return null;
   }
 
   formatFileSize(bytes: number): string {

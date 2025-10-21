@@ -2,22 +2,6 @@ import { useState, useEffect } from 'react';
 import { Download, Rocket, AlertCircle, Loader2 } from 'lucide-react';
 import { releasesService, type ReleaseManifest } from '../../services/releases';
 
-// Type definitions for User-Agent Client Hints API
-interface NavigatorUAData {
-  getHighEntropyValues(hints: string[]): Promise<{
-    architecture?: string;
-    bitness?: string;
-    brands?: Array<{ brand: string; version: string }>;
-    mobile?: boolean;
-    platform?: string;
-  }>;
-}
-
-declare global {
-  interface Navigator {
-    userAgentData?: NavigatorUAData;
-  }
-}
 
 const DEEPLINK_SCHEME = import.meta.env.VITE_DESKTOP_SCHEME || 'clones-dev';
 
@@ -38,45 +22,9 @@ function getOS(): OS {
   return "Unknown";
 }
 
-async function getArchitecture(): Promise<'arm64' | 'intel'> {
-  // 1. Modern approach: User-Agent Client Hints (Chrome/Edge only)
-  if (navigator.userAgentData && typeof navigator.userAgentData.getHighEntropyValues === 'function') {
-    try {
-      const hints = await navigator.userAgentData.getHighEntropyValues(['architecture']);
-      if (hints.architecture === 'arm') {
-        return 'arm64';
-      }
-      if (hints.architecture === 'x86') {
-        return 'intel';
-      }
-    } catch {
-      // Client Hints failed, continue to fallback
-    }
-  }
-
-  // 2. Legacy detection for other browsers
-  const userAgent = window.navigator.userAgent;
-
-  // Explicit architecture in UA (rare but possible)
-  if (userAgent.includes('ARM') || userAgent.includes('arm64')) {
-    return 'arm64';
-  }
-  if (userAgent.includes('Intel') || userAgent.includes('x86_64') || userAgent.includes('WOW64')) {
-    return 'intel';
-  }
-
-  // 3. For macOS: Default to ARM64 (most modern Macs)
-  // User can manually override if wrong
-  if (userAgent.includes('Mac')) {
-    return 'arm64';  // Statistical best guess for 2025
-  }
-
-  return 'intel';
-}
 
 export function DownloadButtons() {
   const [os, setOs] = useState<OS>('Unknown');
-  const [arch, setArch] = useState<'arm64' | 'intel'>('arm64');
   const [manifest, setManifest] = useState<ReleaseManifest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,14 +32,6 @@ export function DownloadButtons() {
 
   useEffect(() => {
     setOs(getOS());
-
-    // Async architecture detection
-    getArchitecture().then(detectedArch => {
-      setArch(detectedArch);
-    }).catch(() => {
-      // Fallback to ARM64 on error (most common on modern Macs)
-      setArch('arm64');
-    });
   }, []);
 
   useEffect(() => {
@@ -137,8 +77,8 @@ export function DownloadButtons() {
     if (!manifest) return null;
 
     if (os === 'macOS') {
-      const downloadUrl = releasesService.getDownloadUrlForPlatform(manifest, 'macos', arch, 'dmg');
-      const fileKey = `macos_${arch}_dmg`;
+      const downloadUrl = releasesService.getDownloadUrlForPlatform(manifest, 'macos');
+      const fileKey = 'macos_universal_dmg';
       const fileInfo = manifest.files[fileKey];
 
       return downloadUrl && fileInfo ? {
@@ -281,7 +221,6 @@ export function DownloadButtons() {
             <div className="relative z-10 flex flex-col items-start">
               <span className="font-medium">
                 Download for {downloadInfo.platform}
-                {downloadInfo.platform === 'macOS' ? ` (${downloadInfo.arch})` : ''}
                 {downloadInfo.platform === 'Windows' && (downloadInfo as any).fileType ? ` (${(downloadInfo as any).fileType})` : ''}
               </span>
               <span className="text-xs text-[#94A3B8]">v{manifest.version} • {downloadInfo.size}</span>
@@ -290,27 +229,6 @@ export function DownloadButtons() {
         )}
       </button>
 
-      {/* Architecture selector - only for macOS */}
-      {downloadInfo.platform === 'macOS' && (
-        <div className="flex items-center justify-center gap-2 text-xs text-[#94A3B8]">
-          <span>Wrong architecture?</span>
-          <div className="flex gap-1">
-            <button
-              onClick={() => setArch('arm64')}
-              className={`px-2 py-1 rounded ${arch === 'arm64' ? 'bg-primary-500/20 text-primary-400' : 'hover:text-[#F8FAFC]'} transition-colors`}
-            >
-              Apple Silicon
-            </button>
-
-            <button
-              onClick={() => setArch('intel')}
-              className={`px-2 py-1 rounded ${arch === 'intel' ? 'bg-primary-500/20 text-primary-400' : 'hover:text-[#F8FAFC]'} transition-colors`}
-            >
-              Intel
-            </button>
-          </div>
-        </div>
-      )}
 
       <a
         href={deepLink}
