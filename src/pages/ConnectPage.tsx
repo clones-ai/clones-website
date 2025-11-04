@@ -27,7 +27,7 @@ export default function ConnectPage() {
     // Latch to prevent duplicate auto-auth attempts
     const autoAuthStarted = useRef(false);
     const stableReadyTimestamp = useRef<number>(0);
-    
+
     // Fallback mechanism for stuck isReconnecting state
     const reconnectingStartTime = useRef(0);
     const [showReconnectingTimeout, setShowReconnectingTimeout] = useState(false);
@@ -183,7 +183,7 @@ export default function ConnectPage() {
                         <CheckCircle className="w-8 h-8 text-green-400" />
                     </div>
                     <h3 className="text-xl font-medium text-text-primary mb-2 font-system">Authentication Successful</h3>
-                    <p className="text-text-secondary">Redirecting you back to the app...</p>
+                    <p className="text-text-secondary">You can go back to the Clones Desktop app now.</p>
                 </div>
             );
         }
@@ -221,16 +221,16 @@ export default function ConnectPage() {
                     <div className={`inline-flex items-center justify-center gap-3 px-6 py-3 ultra-premium-glass-card border rounded-full ${ready ? 'border-green-500/30' : 'border-yellow-500/30'}`}>
                         <div className={`w-2 h-2 rounded-full ${ready ? 'bg-green-400 animate-pulse' : 'bg-yellow-400 animate-spin'}`} />
                         <span className="text-text-primary font-medium font-system">
-                            {isReconnecting ? 
-                            showReconnectingTimeout ? 'Reconnection Taking Long...' : 'Reconnecting Wallet...' 
-                            : ready ? `${walletName} Connected` : 'Preparing Wallet...'}
+                            {isReconnecting ?
+                                showReconnectingTimeout ? 'Reconnection Taking Long...' : 'Reconnecting Wallet...'
+                                : ready ? `${walletName} Connected` : 'Preparing Wallet...'}
                         </span>
                     </div>
 
                     {isReconnecting && (
                         <p className="text-text-secondary text-sm">
-                            {showReconnectingTimeout ? 
-                                'Connection is taking longer than expected. You can try reconnecting manually.' : 
+                            {showReconnectingTimeout ?
+                                'Connection is taking longer than expected. You can try reconnecting manually.' :
                                 'Please wait while we establish a connection with your wallet...'}
                         </p>
                     )}
