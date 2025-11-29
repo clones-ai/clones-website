@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Download, Rocket, AlertCircle, Loader2 } from 'lucide-react';
+import { Download, AlertCircle, Loader2 } from 'lucide-react';
 import { releasesService, type ReleaseManifest } from '../../services/releases';
 
-
-const DEEPLINK_SCHEME = import.meta.env.VITE_DESKTOP_SCHEME || 'clones-dev';
 
 type OS = 'Windows' | 'macOS' | 'Linux' | 'iOS' | 'Android' | 'Unknown';
 
@@ -117,7 +115,6 @@ export function DownloadButtons() {
     return null;
   };
 
-  const deepLink = `${DEEPLINK_SCHEME}://onboard`;
   const downloadInfo = getDownloadInfo();
 
   // Loading state
@@ -167,14 +164,6 @@ export function DownloadButtons() {
           <AlertCircle className="w-5 h-5 text-amber-400" />
           <span className="font-medium">Linux support coming soon</span>
         </div>
-
-        <a
-          href={deepLink}
-          className="group relative w-full inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#1A1A1A] border border-white/10 hover:border-white/30 text-[#94A3B8] rounded-full transition-all duration-300 hover:text-white"
-        >
-          <Rocket className="relative w-5 h-5" />
-          <span className="relative font-medium">Open Existing App</span>
-        </a>
       </div>
     );
   }
@@ -188,14 +177,6 @@ export function DownloadButtons() {
           <AlertCircle className="w-5 h-5 text-amber-400" />
           <span className="font-medium">No release available for {platformName} yet, but soon</span>
         </div>
-
-        <a
-          href={deepLink}
-          className="group relative w-full inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#1A1A1A] border border-white/10 hover:border-white/30 text-[#94A3B8] rounded-full transition-all duration-300 hover:text-white"
-        >
-          <Rocket className="relative w-5 h-5" />
-          <span className="relative font-medium">Open Existing App</span>
-        </a>
       </div>
     );
   }
@@ -228,15 +209,6 @@ export function DownloadButtons() {
           </>
         )}
       </button>
-
-
-      <a
-        href={deepLink}
-        className="group relative w-full inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#1A1A1A] border border-white/10 hover:border-white/30 text-[#94A3B8] rounded-full transition-all duration-300 hover:text-white"
-      >
-        <Rocket className="relative w-5 h-5" />
-        <span className="relative font-medium">Open Existing App</span>
-      </a>
     </div>
   );
 }

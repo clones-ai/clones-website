@@ -4,6 +4,7 @@ import { RevealUp } from '../components/motion/Reveal';
 import { AnimatedButton } from '../components/motion/AnimatedButton';
 import { TiltCard } from '../components/motion/TiltCard';
 import { SimpleSpline } from '../components/shared/SimpleSpline';
+import { DownloadButtons } from '../features/desktop/DownloadButtons';
 
 export default function HomePage() {
   const [showVideoPopup, setShowVideoPopup] = useState(false);
@@ -116,6 +117,44 @@ export default function HomePage() {
             </AnimatedButton>
           </div>
         </RevealUp>
+
+        <div className="mt-12 sm:mt-16 w-full px-4">
+          <div className="max-w-3xl mx-auto">
+            <TiltCard className="ultra-premium-glass-card rounded-2xl p-6 sm:p-10 text-center transition-all duration-300 hover:shadow-ultra-premium-hover border border-primary-500/20">
+              <RevealUp distance={4}>
+                <div className="flex flex-col items-center">
+                  <h3 className="text-2xl sm:text-3xl font-light text-text-primary mb-4 font-system tracking-wide">
+                    Start Training Your Clone
+                  </h3>
+
+                  <p className="text-text-secondary text-sm sm:text-base mb-8 leading-relaxed max-w-xl mx-auto font-light">
+                    Turn your expertise into a liquid asset. The Forge app captures your workflows to train AI agents—allowing you to create, own, and monetize your digital clone.
+                  </p>
+
+                  <div className="w-full max-w-md mx-auto">
+                    <DownloadButtons />
+                  </div>
+                  <div className="mt-6 flex flex-wrap justify-center gap-4 text-xs text-text-muted font-mono">
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                      macOS
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                      Windows
+                    </span>
+                  </div>
+
+                  <span className="block mt-4 text-text-muted text-xs sm:text-sm bg-black/30 p-3 rounded-lg border border-white/5">
+                    <span className="block mb-1 text-primary-400">Why Desktop?</span>
+                    Native desktop capture is required for high-fidelity training data.
+                  </span>
+
+                </div>
+              </RevealUp>
+            </TiltCard>
+          </div>
+        </div>
 
         <div className="mt-8 sm:mt-12 mb-8">
           <div className="max-w-2xl mx-auto">
