@@ -176,15 +176,17 @@ function ConnectButtonWithProviderCheck({ onClick }: { onClick: () => void }) {
         return 'Connect Wallet';
     };
 
+    const isDisabled = isLoading || !hasAvailableProvider;
+
     return (
         <button
             onClick={onClick}
-            disabled={isLoading && !hasAvailableProvider}
+            disabled={isDisabled}
             type="button"
             className={`
                 bg-[#8B5CF6] text-white rounded-full px-6 py-2 font-medium
                 transition-all duration-200
-                ${isLoading
+                ${isDisabled
                     ? 'opacity-70 cursor-not-allowed'
                     : 'hover:bg-[#7C3AED]'
                 }

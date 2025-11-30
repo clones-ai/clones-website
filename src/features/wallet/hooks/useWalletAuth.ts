@@ -59,13 +59,9 @@ export function useWalletAuth() {
      * @returns AuthPayload with address, signature, timestamp, and message
      */
     const authenticateWallet = useCallback(async (): Promise<AuthPayload> => {
-        console.log('🔐 authenticateWallet called', {
-            isReady,
-            isConnected,
-            isReconnecting,
-            hasWalletClient: !!walletClient,
-            hasAddress: !!address,
-        });
+        if (process.env.NODE_ENV === 'development') {
+            console.log('🔐 authenticateWallet called', { isReady, hasAddress: !!address });
+        }
         
         // Pre-flight checks
         if (!isReady) {
@@ -89,9 +85,13 @@ export function useWalletAuth() {
             const timestamp = Date.now();
             const message = buildSignMessage(timestamp);
             
-            console.log('📝 Requesting signature from wallet...');
+            if (process.env.NODE_ENV === 'development') {
+                console.log('📝 Requesting signature from wallet...');
+            }
             const signature = await signMessageAsync({ message });
-            console.log('✅ Signature received');
+            if (process.env.NODE_ENV === 'development') {
+                console.log('✅ Signature received');
+            }
             
             return {
                 address,
@@ -103,7 +103,7 @@ export function useWalletAuth() {
             signingRef.current = false;
             setIsSigning(false);
         }
-    }, [isReady, isConnected, isReconnecting, address, walletClient, signMessageAsync, buildSignMessage]);
+    }, [isReady, address, signMessageAsync, buildSignMessage]);
     
     /**
      * Send authentication payload to backend.
