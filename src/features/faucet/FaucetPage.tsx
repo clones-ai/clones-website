@@ -115,7 +115,7 @@ export default function FaucetPage() {
 
     setLoading(true);
     setError(null);
-    
+
     // Reset any previous writeContract state before starting new claim
     resetWriteContract();
 
