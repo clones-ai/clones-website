@@ -1,167 +1,119 @@
-import { useCallback, useRef, useState, useEffect } from 'react';
-import { useAccount, useWalletClient, useSignMessage } from 'wagmi';
+import { useCallback, useState, useRef } from 'react';
+import { useSignMessage } from 'wagmi';
+import { useWalletReady } from './useWalletReady';
 
-/**
- * Wait until a getter returns a truthy value (or timeout).
- * This prevents signing too early when walletClient isn't ready yet.
- */
-async function waitForTruthy<T>(
-    getter: () => T | undefined | null,
-    {
-        intervalMs = 75,
-        timeoutMs = 8000,
-    }: { intervalMs?: number; timeoutMs?: number } = {}
-): Promise<T> {
-    const start = Date.now();
-    return new Promise<T>((resolve, reject) => {
-        const tick = () => {
-            const val = getter();
-            if (val) return resolve(val);
-            if (Date.now() - start >= timeoutMs) {
-                return reject(new Error('Wallet client did not initialize in time'));
-            }
-            setTimeout(tick, intervalMs);
-        };
-        tick();
-    });
-}
-
-export type AuthPayload = {
+export interface AuthPayload {
     address: `0x${string}`;
     signature: `0x${string}`;
     timestamp: number;
     message: string;
-};
+}
 
+export type WalletStatus = 'disconnected' | 'reconnecting' | 'connecting' | 'ready';
+
+/**
+ * Authentication hook for wallet-based sign-in.
+ * 
+ * This hook provides:
+ * - Wallet authentication via message signing
+ * - Backend communication for session establishment
+ * - Rate limiting to prevent auth spam
+ * 
+ * No polling - uses reactive state from useWalletReady.
+ */
 export function useWalletAuth() {
-    const { address, isConnected, status, isReconnecting } = useAccount();
-    const { data: walletClient, isLoading: isWalletClientLoadingRaw } = useWalletClient();
+    const { isReady, isConnected, isReconnecting, isLoading, address, walletClient } = useWalletReady();
     const { signMessageAsync } = useSignMessage();
-
+    
     const [isSigning, setIsSigning] = useState(false);
     const signingRef = useRef(false);
-
-    // Circuit breaker for auth backend calls
+    
+    // Rate limiting for backend auth calls
     const authFailureCount = useRef(0);
     const lastAuthAttempt = useRef(0);
     
-    // Circuit breaker for isReconnecting timeout
-    const reconnectingStartTime = useRef(0);
-    const [forceReady, setForceReady] = useState(false);
-
-    const connected = isConnected && !!address && !!walletClient && status === 'connected';
-    const baseReady = connected && !isWalletClientLoadingRaw && !isReconnecting;
-    const ready = baseReady || (connected && forceReady); // Allow force override
-    const loading = isReconnecting || isWalletClientLoadingRaw || (isConnected && !walletClient);
-
-    // Monitor isReconnecting timeout and force ready state after threshold
-    useEffect(() => {
-        if (isReconnecting) {
-            if (reconnectingStartTime.current === 0) {
-                reconnectingStartTime.current = Date.now();
-                setForceReady(false);
-                console.log('[useWalletAuth] Reconnection started, monitoring timeout...');
-            }
-        } else {
-            if (reconnectingStartTime.current > 0) {
-                const duration = Date.now() - reconnectingStartTime.current;
-                console.log(`[useWalletAuth] Reconnection completed in ${duration}ms`);
-                reconnectingStartTime.current = 0;
-                setForceReady(false);
-            }
-        }
-
-        // Force ready state if reconnecting too long and we have basic connectivity
-        if (isReconnecting && reconnectingStartTime.current > 0 && connected) {
-            const duration = Date.now() - reconnectingStartTime.current;
-            if (duration > 10000 && !forceReady) { // 10 seconds timeout
-                console.warn(`[useWalletAuth] Reconnection timeout (${duration}ms). Force enabling ready state.`);
-                setForceReady(true);
-            }
-        }
-    }, [isReconnecting, connected, forceReady]);
-
-    const walletStatus = (() => {
+    // Compute wallet status
+    const status: WalletStatus = (() => {
         if (isReconnecting) return 'reconnecting';
-        if (loading) return 'connecting';
-        if (ready) return 'ready';
+        if (isLoading) return 'connecting';
+        if (isReady) return 'ready';
         return 'disconnected';
     })();
-
-    const isWalletReady = useCallback(() => {
-        return ready;
-    }, [ready]);
-
+    
     /**
-     * Build the exact message to sign. Keep formatting stable for backend verification.
+     * Build the message to sign.
+     * Format must match backend verification.
      */
-    const buildSignMessage = useCallback((timestamp: number) => {
-        const header = 'Clones desktop';
-        return `${header}\nnonce: ${timestamp}`;
+    const buildSignMessage = useCallback((timestamp: number): string => {
+        return `Clones desktop\nnonce: ${timestamp}`;
     }, []);
-
+    
     /**
-     * Trigger the wallet signature once the wallet client is truly ready.
+     * Request wallet signature for authentication.
+     * 
+     * Pre-conditions:
+     * - Wallet must be ready (isReady === true)
+     * - No signing operation in progress
+     * 
+     * @throws Error if wallet not ready or signing in progress
+     * @returns AuthPayload with address, signature, timestamp, and message
      */
-    const authenticateWallet = useCallback(
-        async (): Promise<AuthPayload> => {
-            console.log('🔐 authenticateWallet called', {
-                isConnected,
-                isReconnecting,
-                hasWalletClient: !!walletClient,
-                hasAddress: !!address,
-                status
-            });
-
-            if (isReconnecting) {
-                throw new Error('Wallet is reconnecting, please wait');
-            }
-
-            if (!isConnected) {
-                throw new Error('Wallet not connected');
-            }
-
-            if (signingRef.current) {
-                throw new Error('Authentication already in progress');
-            }
-
-            signingRef.current = true;
-            setIsSigning(true);
-
-            try {
-                // Wait explicitly for wallet client init to avoid race conditions
-                console.log('⏳ Waiting for wallet client to be ready...');
-                await waitForTruthy(() => walletClient, { intervalMs: 80, timeoutMs: 8000 });
-                console.log('✅ Wallet client ready');
-
-                const ts = Date.now();
-                const message = buildSignMessage(ts);
-
-                console.log('📝 Requesting signature from wallet...');
-                const signature = await signMessageAsync({ message });
-                console.log('✅ Signature received');
-
-                if (!address) {
-                    throw new Error('Missing address after signing');
-                }
-
-                return {
-                    address,
-                    signature,
-                    timestamp: ts,
-                    message,
-                };
-            } finally {
-                signingRef.current = false;
-                setIsSigning(false);
-            }
-        },
-        [address, isConnected, isReconnecting, signMessageAsync, walletClient, buildSignMessage, status]
-    );
-
+    const authenticateWallet = useCallback(async (): Promise<AuthPayload> => {
+        console.log('🔐 authenticateWallet called', {
+            isReady,
+            isConnected,
+            isReconnecting,
+            hasWalletClient: !!walletClient,
+            hasAddress: !!address,
+        });
+        
+        // Pre-flight checks
+        if (!isReady) {
+            throw new Error(
+                'Wallet not ready for authentication. Please wait for connection to stabilize.'
+            );
+        }
+        
+        if (!address) {
+            throw new Error('No wallet address available');
+        }
+        
+        if (signingRef.current) {
+            throw new Error('Authentication already in progress');
+        }
+        
+        signingRef.current = true;
+        setIsSigning(true);
+        
+        try {
+            const timestamp = Date.now();
+            const message = buildSignMessage(timestamp);
+            
+            console.log('📝 Requesting signature from wallet...');
+            const signature = await signMessageAsync({ message });
+            console.log('✅ Signature received');
+            
+            return {
+                address,
+                signature,
+                timestamp,
+                message,
+            };
+        } finally {
+            signingRef.current = false;
+            setIsSigning(false);
+        }
+    }, [isReady, isConnected, isReconnecting, address, walletClient, signMessageAsync, buildSignMessage]);
+    
     /**
-     * Send the signed payload to your backend using AuthManager
-     * Uses bootstrap call (NO CSRF) for initial authentication
+     * Send authentication payload to backend.
+     * 
+     * Features:
+     * - Rate limiting with exponential backoff
+     * - Circuit breaker after 3 failures
+     * 
+     * @param payload Authentication payload from authenticateWallet
+     * @param token Optional connection token
      */
     const sendAuthToBackend = useCallback(
         async (payload: AuthPayload, token?: string | null) => {
@@ -169,75 +121,85 @@ export function useWalletAuth() {
                 address: payload.address,
                 hasToken: !!token,
                 timestamp: payload.timestamp,
-                failureCount: authFailureCount.current
+                failureCount: authFailureCount.current,
             });
-
+            
             // Circuit breaker: prevent auth spam
             const now = Date.now();
             const timeSinceLastAttempt = now - lastAuthAttempt.current;
-
+            
             if (authFailureCount.current >= 3) {
-                const waitTime = Math.min(5000 * Math.pow(2, authFailureCount.current - 3), 30000); // Max 30s
+                const waitTime = Math.min(
+                    5000 * Math.pow(2, authFailureCount.current - 3),
+                    30000
+                );
+                
                 if (timeSinceLastAttempt < waitTime) {
                     const waitSeconds = Math.ceil((waitTime - timeSinceLastAttempt) / 1000);
                     console.warn(`🚫 Auth circuit breaker: waiting ${waitSeconds}s before retry`);
-                    throw new Error(`Too many authentication attempts. Please wait ${waitSeconds} seconds before trying again.`);
+                    throw new Error(
+                        `Too many authentication attempts. Please wait ${waitSeconds} seconds.`
+                    );
                 }
             }
-
+            
             lastAuthAttempt.current = now;
-
+            
             try {
                 const { createAuthService } = await import('../../auth');
-
-                // Merge token into the payload body (required by backend schema)
+                
                 const authData = {
                     ...payload,
                     ...(token ? { token } : {}),
                 };
-
-                console.log('📡 Calling AuthService.authenticateWithWallet...', {
-                    endpoint: '/api/v1/wallet/connect',
-                    address: authData.address
-                });
-
-                // Use AuthService for authentication
+                
+                console.log('📡 Calling AuthService.authenticateWithWallet...');
+                
                 const authService = createAuthService();
                 const result = await authService.authenticateWithWallet(authData);
-
+                
                 // Reset failure count on success
                 authFailureCount.current = 0;
-                console.log('✅ Authentication successful', result);
-
+                console.log('✅ Authentication successful');
+                
                 return result;
             } catch (error) {
                 authFailureCount.current++;
                 console.error('❌ Authentication failed', {
                     error,
                     failureCount: authFailureCount.current,
-                    timeSinceLastAttempt
                 });
                 throw error;
             }
         },
         []
     );
-
-
+    
+    /**
+     * Reset rate limiting state.
+     * Call this when user explicitly wants to retry.
+     */
+    const resetRateLimiting = useCallback(() => {
+        authFailureCount.current = 0;
+        lastAuthAttempt.current = 0;
+    }, []);
+    
     return {
-        // actions
+        // Actions
         authenticateWallet,
         sendAuthToBackend,
-
-        connected,
-        ready,
-        loading,
-        status: walletStatus,
+        resetRateLimiting,
+        
+        // State
+        connected: isConnected && !!address && !!walletClient,
+        ready: isReady,
+        loading: isLoading,
+        status,
         address,
         isSigning,
-
-        // legacy compatibility
-        isWalletClientLoading: loading,
-        isWalletReady,
+        
+        // Legacy compatibility
+        isWalletClientLoading: isLoading,
+        isWalletReady: useCallback(() => isReady, [isReady]),
     };
 }

@@ -97,8 +97,8 @@
 import { useReducer, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../features/auth/hooks';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSimulateContract, useReadContract, useChainId, useConfig, useTransactionConfirmations, useConnectorClient } from 'wagmi';
-import { parseEther, type Abi, type AbiFunction, parseUnits, isAddress, getAbiItem, encodeFunctionData, createWalletClient, custom } from 'viem';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSimulateContract, useReadContract, useChainId, useConfig, useTransactionConfirmations } from 'wagmi';
+import { parseEther, type Abi, type AbiFunction, parseUnits, isAddress, getAbiItem, encodeFunctionData } from 'viem';
 import { z } from 'zod';
 
 import { toUserError, type UserFacingError } from '../features/wallet/evmErrorDecoder';
@@ -1040,7 +1040,6 @@ export const useTransactionProcessor = () => {
     const config = useConfig();
     const currentChain = config.chains.find(chain => chain.id === chainId);
     const { isAuthenticated, secureCall, establishSessionFromTransaction } = useAuth();
-    const { data: connectorClient } = useConnectorClient();
 
     const [state, dispatch] = useReducer(transactionReducer, initialState);
     const isAuthenticatingRef = useRef(false);
@@ -1049,7 +1048,7 @@ export const useTransactionProcessor = () => {
     const authFailureCount = useRef(0);
     const lastAuthAttempt = useRef(0);
 
-    const { writeContract, data: writeData, isPending: isWritePending, error: writeError } = useWriteContract();
+    const { writeContract, data: writeData, isPending: isWritePending, error: writeError, reset: resetWriteContract } = useWriteContract();
 
     // Single writeContract instance handles both approvals and transactions
 
@@ -1227,15 +1226,19 @@ export const useTransactionProcessor = () => {
     useEffect(() => {
         if (writeError && (state.currentState === 'EXECUTING' || state.currentState === 'CONFIRMING')) {
             dispatchUserError(dispatch, writeError, 'transaction', updateSessionStatus, state.txHash ?? undefined);
+            // Reset writeContract state so user can retry
+            resetWriteContract();
         }
-    }, [writeError, state.currentState, state.txHash, updateSessionStatus]);
+    }, [writeError, state.currentState, state.txHash, updateSessionStatus, resetWriteContract]);
 
     // Approval error handling
     useEffect(() => {
         if (writeError && state.currentState === 'APPROVING') {
             dispatchUserError(dispatch, writeError, 'approval', updateSessionStatus, state.approvalTxHash ?? undefined);
+            // Reset writeContract state so user can retry
+            resetWriteContract();
         }
-    }, [writeError, state.currentState, state.approvalTxHash, updateSessionStatus]);
+    }, [writeError, state.currentState, state.approvalTxHash, updateSessionStatus, resetWriteContract]);
 
     useEffect(() => {
         if ((isApprovalError || approvalReceiptError) && !isWritePending && !isApprovalConfirming) {
@@ -1374,49 +1377,31 @@ export const useTransactionProcessor = () => {
             return;
         }
 
-        // Determine if the active connector is compatible (has getChainId)
-        const anyClient: any = connectorClient as any;
-        const activeConnector: any = anyClient?.transport?.connector ?? anyClient?.connector;
-        const hasCompatibleConnector = !!(activeConnector && typeof activeConnector.getChainId === 'function');
+        // Reset any previous writeContract state before starting new approval
+        resetWriteContract();
 
+        // Transition to APPROVING state first
         dispatch({ type: 'START_APPROVAL' });
 
-        if (!hasCompatibleConnector && typeof (window as any).ethereum !== 'undefined' && currentChain) {
-            try {
-                const walletClient = createWalletClient({
-                    account: address as `0x${string}`,
-                    chain: currentChain as any,
-                    transport: custom((window as any).ethereum)
-                });
-
-                const txHash = await walletClient.writeContract({
-                    address: tokenAddress,
-                    abi: [{ name: 'approve', type: 'function', stateMutability: 'nonpayable', inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }] }],
-                    functionName: 'approve',
-                    args: [spender, parseUnits(state.sessionData.transactionParams.amount, tokenDecimals)],
-                    chain: currentChain as any
-                });
-
-                // Drive the existing state machine + receipt watcher
-                dispatch({ type: 'APPROVAL_SUBMITTED', payload: { txHash } });
-                return;
-            } catch (fallbackErr) {
-                // Let normal error handler convert to user-facing error
-                dispatchUserError(dispatch, fallbackErr, 'approval', updateSessionStatus);
-                return;
-            }
-        }
-
-        // Default path via wagmi writeContract
+        // Use wagmi writeContract - errors are handled by the writeError effect
         writeContract({
             address: tokenAddress,
-            abi: [{ name: 'approve', type: 'function', stateMutability: 'nonpayable', inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }] }],
+            abi: [{ 
+                name: 'approve', 
+                type: 'function', 
+                stateMutability: 'nonpayable', 
+                inputs: [
+                    { name: 'spender', type: 'address' }, 
+                    { name: 'amount', type: 'uint256' }
+                ],
+                outputs: [{ type: 'bool' }]
+            }],
             functionName: 'approve',
             args: [spender, parseUnits(state.sessionData.transactionParams.amount, tokenDecimals)],
-            ...(address && { account: address }),
-            ...(chainId && { chainId }),
+            account: address,
+            chainId,
         });
-    }, [state.sessionData, state.currentState, writeContract, address, isConnected, tokenDecimals, tokenAddress, spender, chainId, dispatch, connectorClient, currentChain, updateSessionStatus]);
+    }, [state.sessionData, state.currentState, writeContract, resetWriteContract, address, isConnected, tokenDecimals, tokenAddress, spender, chainId, dispatch]);
 
     const executeTransaction = useCallback(() => {
         if (state.currentState !== 'READY_TO_EXECUTE' || isWritePending) {
@@ -1459,10 +1444,13 @@ export const useTransactionProcessor = () => {
             return;
         }
 
+        // Reset any previous writeContract state before starting new transaction
+        resetWriteContract();
+
         // Security: Use only validated preparedTx data (never trust simulationRequest for execution)
         dispatch({ type: 'EXECUTE_TRANSACTION' });
         writeContract(buildWriteParams(state.preparedTx, address, chainId));
-    }, [state.preparedTx, state.simulationRequest, state.currentState, isWritePending, address, isConnected, chainId, currentChain, writeContract, dispatch]);
+    }, [state.preparedTx, state.simulationRequest, state.currentState, isWritePending, address, isConnected, chainId, currentChain, writeContract, resetWriteContract, dispatch]);
 
     // Handle approval confirmation and recheck allowance
     useEffect(() => {
