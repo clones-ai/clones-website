@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useConnect, type Connector } from 'wagmi';
 
@@ -127,6 +127,13 @@ function ConnectButtonWithProviderCheck({ onClick }: { onClick: () => void }) {
     const [hasAvailableProvider, setHasAvailableProvider] = useState(false);
     const [isCheckingProviders, setIsCheckingProviders] = useState(true);
 
+    // Create stable key from connector IDs to avoid unnecessary re-runs
+    // when connectors array reference changes but content is the same
+    const connectorsKey = useMemo(
+        () => connectors.map(c => c.id).join(','),
+        [connectors]
+    );
+
     // Check if any connector has an available provider
     useEffect(() => {
         let cancelled = false;
@@ -165,7 +172,7 @@ function ConnectButtonWithProviderCheck({ onClick }: { onClick: () => void }) {
         return () => {
             cancelled = true;
         };
-    }, [connectors]);
+    }, [connectorsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const isLoading = isConnecting || isReconnecting || isCheckingProviders;
 

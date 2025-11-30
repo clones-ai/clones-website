@@ -79,6 +79,8 @@ export function useWalletReady(): WalletReadyState {
                 clearTimeout(timeoutRef.current);
                 timeoutRef.current = null;
             }
+            // Reset ref on cleanup to prevent stale timestamps on remount
+            reconnectStartRef.current = 0;
         };
     }, [isReconnecting]);
     

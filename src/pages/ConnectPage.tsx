@@ -31,9 +31,10 @@ export default function ConnectPage() {
     const [pageState, setPageState] = useState<PageState>('idle');
     const [error, setError] = useState<string | null>(null);
 
-    // Latch to prevent duplicate auto-auth attempts per token
+    // Refs to prevent duplicate calls and circular dependencies
     const hasAttemptedAuth = useRef(false);
     const currentToken = useRef<string>('');
+    const isAuthInProgress = useRef(false);
 
     // URL params
     const token = searchParams.get('token') || '';
@@ -45,6 +46,7 @@ export default function ConnectPage() {
         if (token !== currentToken.current) {
             currentToken.current = token;
             hasAttemptedAuth.current = false;
+            isAuthInProgress.current = false;
             setPageState('idle');
             setError(null);
         }
@@ -52,12 +54,16 @@ export default function ConnectPage() {
 
     /**
      * Perform wallet authentication and backend registration.
+     * Uses ref-based guard to prevent circular dependency with pageState.
      */
     const performAuth = useCallback(async () => {
-        if (pageState === 'connecting' || pageState === 'success') {
+        // Guard using ref to avoid circular dependency with pageState
+        if (isAuthInProgress.current) {
             return;
         }
 
+        isAuthInProgress.current = true;
+        
         try {
             setPageState('connecting');
             setError(null);
@@ -66,6 +72,7 @@ export default function ConnectPage() {
             await sendAuthToBackend(authData, token);
 
             setPageState('success');
+            isAuthInProgress.current = false;
 
             // Redirect after success
             setTimeout(() => {
@@ -80,9 +87,10 @@ export default function ConnectPage() {
             const message = err instanceof Error ? err.message : 'Unknown error occurred';
             setError(message);
             setPageState('error');
+            isAuthInProgress.current = false;
             hasAttemptedAuth.current = false; // Allow retry
         }
-    }, [authenticateWallet, sendAuthToBackend, token, navigate, fromPage, sessionId, pageState]);
+    }, [authenticateWallet, sendAuthToBackend, token, navigate, fromPage, sessionId]);
 
     // Auto-open connect modal if not connected
     useEffect(() => {
@@ -115,6 +123,7 @@ export default function ConnectPage() {
         setPageState('idle');
         resetRateLimiting();
         hasAttemptedAuth.current = false;
+        isAuthInProgress.current = false;
 
         if (isConnected && isReady) {
             void performAuth();
