@@ -63,7 +63,7 @@ export default function FaucetPage() {
   const [copied, setCopied] = useState(false);
 
   // Contract interactions
-  const { writeContract, data: writeData, isPending: isWritePending, error: writeError } = useWriteContract();
+  const { writeContract, data: writeData, isPending: isWritePending, error: writeError, reset: resetWriteContract } = useWriteContract();
 
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash: writeData,
@@ -115,6 +115,9 @@ export default function FaucetPage() {
 
     setLoading(true);
     setError(null);
+    
+    // Reset any previous writeContract state before starting new claim
+    resetWriteContract();
 
     try {
       writeContract({
@@ -126,7 +129,7 @@ export default function FaucetPage() {
       setError(err instanceof Error ? err.message : 'Failed to claim tokens');
       setLoading(false);
     }
-  }, [isConnected, address, faucetStatus, writeContract]);
+  }, [isConnected, address, faucetStatus, writeContract, resetWriteContract]);
 
   // Handle transaction updates
   useEffect(() => {
@@ -147,8 +150,10 @@ export default function FaucetPage() {
     if (writeError) {
       setError(writeError.message || 'Transaction failed');
       setLoading(false);
+      // Reset writeContract state so user can retry
+      resetWriteContract();
     }
-  }, [writeError]);
+  }, [writeError, resetWriteContract]);
 
   // Copy address to clipboard
   const copyAddress = useCallback(async () => {
@@ -236,6 +241,7 @@ export default function FaucetPage() {
                     setSuccess(false);
                     setTxHash(null);
                     setError(null);
+                    resetWriteContract();
                   }}
                   variant="secondary"
                   className="font-system"
@@ -251,7 +257,10 @@ export default function FaucetPage() {
                 <h3 className="text-2xl font-light text-text-primary mb-4 font-system">Claim Failed</h3>
                 <p className="text-text-secondary text-base mb-8 leading-relaxed">{error}</p>
                 <AnimatedButton
-                  onClick={() => setError(null)}
+                  onClick={() => {
+                    setError(null);
+                    resetWriteContract();
+                  }}
                   variant="secondary"
                   className="font-system"
                 >

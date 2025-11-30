@@ -1,57 +1,67 @@
-import { http, createStorage } from 'wagmi';
-import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { http, createConfig } from 'wagmi';
 import { base, baseSepolia } from 'wagmi/chains';
+import { connectorsForWallets } from '@rainbow-me/rainbowkit';
+import {
+    injectedWallet,
+    rabbyWallet,
+    metaMaskWallet,
+    coinbaseWallet,
+    walletConnectWallet,
+    rainbowWallet,
+    phantomWallet,
+    trustWallet,
+} from '@rainbow-me/rainbowkit/wallets';
+
+const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo-project-id';
+const appName = 'Clones Desktop';
 
 /**
- * Custom storage with timeout to prevent infinite reconnection loops
+ * Custom wallet connectors with explicit support for injected wallets.
+ * 
+ * Order matters: wallets are displayed in this order in the modal.
+ * injectedWallet is a fallback for any injected provider not explicitly listed.
  */
-const customStorage = createStorage({
-    storage: {
-        getItem: (key) => {
-            try {
-                const item = localStorage.getItem(key);
-                if (!item) return null;
-                
-                const parsed = JSON.parse(item);
-                // Check if stored connection is older than 5 minutes
-                if (parsed.timestamp && Date.now() - parsed.timestamp > 5 * 60 * 1000) {
-                    localStorage.removeItem(key);
-                    return null;
-                }
-                return item;
-            } catch {
-                return null;
-            }
+const connectors = connectorsForWallets(
+    [
+        {
+            groupName: 'Recommended',
+            wallets: [
+                rabbyWallet,
+                metaMaskWallet,
+                coinbaseWallet,
+                rainbowWallet,
+            ],
         },
-        setItem: (key, value) => {
-            try {
-                const valueWithTimestamp = JSON.stringify({
-                    ...JSON.parse(value),
-                    timestamp: Date.now()
-                });
-                localStorage.setItem(key, valueWithTimestamp);
-            } catch {
-                localStorage.setItem(key, value);
-            }
+        {
+            groupName: 'Other Wallets',
+            wallets: [
+                walletConnectWallet,
+                phantomWallet,
+                trustWallet,
+                injectedWallet, // Fallback for any other injected wallet
+            ],
         },
-        removeItem: (key) => localStorage.removeItem(key),
-    },
-});
+    ],
+    {
+        appName,
+        projectId,
+    }
+);
 
 /**
- * Wagmi configuration created outside component to prevent recreation
- * This fixes the main cause of isReconnecting getting stuck
+ * Wagmi configuration with custom connectors.
+ * 
+ * Key decisions:
+ * - Custom connectors for better injected wallet support (Rabby, etc.)
+ * - SSR disabled for SPA
+ * - Multiple chains supported (Base mainnet and testnet)
  */
-export const wagmiConfig = getDefaultConfig({
-    appName: 'Clones Desktop',
-    projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo-project-id',
+export const wagmiConfig = createConfig({
+    connectors,
     chains: [base, baseSepolia],
     transports: {
         [base.id]: http(),
         [baseSepolia.id]: http(),
     },
-    storage: customStorage,
     ssr: false,
-    // Add reconnection timeout to prevent infinite loops
-    syncConnectedChain: true,
 });

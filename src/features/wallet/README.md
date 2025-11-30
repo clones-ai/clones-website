@@ -1,6 +1,6 @@
 # Base Blockchain Wallet Integration
 
-This feature provides complete Base blockchain wallet management with `wagmi` and `RainbowKit`, isolated and organized for better maintainability.
+This feature provides complete Base blockchain wallet management with `wagmi` v2 and `RainbowKit`, following best practices for reliable wallet connections.
 
 ## Installation
 
@@ -12,17 +12,22 @@ npm install wagmi viem @rainbow-me/rainbowkit @tanstack/react-query
 
 ```
 src/features/wallet/
-├── WalletProvider.tsx      # Main provider for the application
-├── ConnectWalletButton.tsx # Connect/disconnect button
-├── useWalletAuth.ts        # Authentication hook
-├── useWalletName.ts        # Hook to get connected wallet name
-├── index.ts               # Centralized exports
-└── README.md              # Documentation
+├── WalletProvider.tsx       # Root provider wrapping the app
+├── ConnectWalletButton.tsx  # Connect/disconnect button component
+├── wagmiConfig.ts           # Wagmi configuration
+├── evmErrorDecoder.ts       # EVM error parsing utilities
+├── hooks/
+│   ├── index.ts             # Hook exports
+│   ├── useWalletReady.ts    # Centralized wallet readiness state
+│   ├── useWalletAuth.ts     # Authentication hook
+│   └── useWalletName.ts     # Connected wallet name hook
+├── index.ts                 # Public API exports
+└── README.md                # This file
 ```
 
 ## Quick Start
 
-### 1. Setup in App.tsx
+### 1. Wrap your app with WalletProvider
 
 ```tsx
 import { WalletProvider } from './features/wallet';
@@ -41,7 +46,7 @@ function App() {
 ### 2. Add connect button to navigation
 
 ```tsx
-import { ConnectWalletButton } from '../features/wallet';
+import { ConnectWalletButton } from './features/wallet';
 
 function Navigation() {
   return (
@@ -52,24 +57,23 @@ function Navigation() {
 }
 ```
 
-### 3. Use authentication in components
+### 3. Use wallet hooks in components
 
 ```tsx
-import { useWalletAuth } from '../features/wallet';
-import { useWalletName } from '../features/wallet/useWalletName';
+import { useWalletReady, useWalletAuth, useWalletName } from './features/wallet';
 
 function MyComponent() {
-  const { authenticateWallet, connected, isWalletClientLoading } = useWalletAuth();
+  const { isReady, isConnected, isLoading, address } = useWalletReady();
+  const { authenticateWallet, sendAuthToBackend } = useWalletAuth();
   const walletName = useWalletName();
 
   const handleAuth = async () => {
-    if (!connected || isWalletClientLoading) return;
+    if (!isReady) return;
     
     try {
       const authData = await authenticateWallet();
-      // authData = { address, signature, timestamp, message }
-      
-      // Send to backend...
+      await sendAuthToBackend(authData, 'optional-token');
+      // Success!
     } catch (error) {
       console.error('Authentication failed:', error);
     }
@@ -77,162 +81,174 @@ function MyComponent() {
 
   return (
     <div>
-      <p>Connected with: {walletName}</p>
-      <button 
-        onClick={handleAuth} 
-        disabled={!connected || isWalletClientLoading}
-      >
-        {isWalletClientLoading ? 'Loading Wallet...' : 'Authenticate'}
+      <p>Status: {isLoading ? 'Loading...' : isReady ? 'Ready' : 'Not connected'}</p>
+      {isConnected && <p>Connected with: {walletName} ({address})</p>}
+      <button onClick={handleAuth} disabled={!isReady}>
+        Authenticate
       </button>
     </div>
   );
 }
 ```
 
-## Features
+## Core Hooks
 
-- **Multi-wallet support** : MetaMask, WalletConnect, Coinbase Wallet, and more
-- **Base blockchain support** : Optimized for Base mainnet and testnet
-- **Auto-connect** : Automatic reconnection on page reload
-- **Message signing** : Secure authentication with timestamp nonce
-- **Smart loading states** : Handles wallet client timing and loading states
-- **Error handling** : Clear error messages and robust error recovery
-- **Design system** : Follows CLONES design with purple theme
-- **Smart UI** : Dynamic messages based on connected wallet and network
-- **Environment config** : Uses `VITE_API_URL` for backend communication
-- **Timing management** : Prevents authentication attempts before wallet client is ready
+### useWalletReady
 
-## Authentication
-
-### Message signing
-
-The system uses message signing for backend authentication:
+Centralized hook for wallet readiness state. **Use this as your single source of truth.**
 
 ```tsx
-import { useWalletAuth } from '../features/wallet';
-
-function AuthComponent() {
-  const { authenticateWallet, sendAuthToBackend, connected, isWalletClientLoading } = useWalletAuth();
-
-  const handleAuth = async () => {
-    if (!connected || isWalletClientLoading) {
-      console.error('Wallet not ready for authentication');
-      return;
-    }
-
-    try {
-      const authData = await authenticateWallet();
-      // authData contains: address, signature, timestamp, message
-      
-      // Send to backend
-      await sendAuthToBackend(authData, 'optional-token');
-    } catch (error) {
-      console.error('Authentication failed:', error.message);
-    }
-  };
-}
+const {
+  isReady,        // boolean - wallet fully ready for signing
+  isConnected,    // boolean - wallet connected (may be initializing)
+  isReconnecting, // boolean - actively reconnecting
+  isLoading,      // boolean - any loading state
+  address,        // `0x${string}` | undefined
+  walletClient,   // Wallet client for signing
+  wasForced,      // boolean - true if ready was forced due to timeout
+} = useWalletReady();
 ```
 
-### Message format
+Features:
+- Single 8-second timeout for stuck reconnections
+- Uses wagmi's `useAccountEffect` for proper event handling
+- No polling - fully reactive
+- Consolidates all state into one hook
+
+### useWalletAuth
+
+Authentication hook for wallet-based sign-in.
+
+```tsx
+const {
+  authenticateWallet,  // () => Promise<AuthPayload>
+  sendAuthToBackend,   // (payload, token?) => Promise<any>
+  resetRateLimiting,   // () => void
+  connected,           // boolean
+  ready,               // boolean (alias for isReady)
+  loading,             // boolean
+  status,              // 'disconnected' | 'reconnecting' | 'connecting' | 'ready'
+  address,             // `0x${string}` | undefined
+  isSigning,           // boolean
+} = useWalletAuth();
+```
+
+Features:
+- Rate limiting with exponential backoff
+- Circuit breaker after 3 failures (max 30s wait)
+- No polling - relies on useWalletReady
+
+### useWalletName
+
+Returns a readable wallet name.
+
+```tsx
+const walletName = useWalletName(); // "MetaMask" or "0x1234...5678"
+```
+
+## Architecture Decisions
+
+### Why no custom storage?
+
+Previous implementations used custom storage with timestamps that:
+- Corrupted wagmi's internal state format
+- Caused unexpected session expiry
+- Led to stuck reconnection states
+
+The current implementation uses wagmi's native storage, letting wagmi handle persistence correctly.
+
+### Why a single useWalletReady hook?
+
+Previous implementations monitored `isReconnecting` in 4 different places with different timeouts (10s, 15s, etc.), causing:
+- Race conditions
+- Inconsistent UI states
+- Unpredictable behavior
+
+Now there's ONE source of truth with ONE timeout (8 seconds).
+
+### Why no polling?
+
+The `waitForTruthy` polling pattern (75ms intervals for 8 seconds) was:
+- CPU-intensive
+- Battery-draining on mobile
+- An anti-pattern when reactive state is available
+
+The new implementation is fully reactive using wagmi's hooks.
+
+## Authentication Flow
+
+### Message Format
 
 ```
 Clones desktop
 nonce: 1703123456789
 ```
 
-## Loading States & Timing
+The nonce is a Unix timestamp to prevent replay attacks.
 
-The wallet integration handles various loading states to ensure smooth user experience:
+### Payload Structure
 
-### useWalletAuth Hook States
-
-```tsx
-const { 
-  authenticateWallet, 
-  sendAuthToBackend, 
-  connected, 
-  address, 
-  isWalletClientLoading  // NEW: Indicates if wallet client is loading
-} = useWalletAuth();
+```typescript
+interface AuthPayload {
+  address: `0x${string}`;
+  signature: `0x${string}`;
+  timestamp: number;
+  message: string;
+}
 ```
 
-### Best Practices
+## Error Handling
 
-1. **Always check loading state before authentication**:
+Use the `evmErrorDecoder` for user-friendly error messages:
+
 ```tsx
-const handleAuth = async () => {
-  if (!connected || isWalletClientLoading) {
-    return; // Don't attempt auth if wallet client isn't ready
-  }
-  
-  try {
-    const authData = await authenticateWallet();
-    // Process authentication...
-  } catch (error) {
-    // Handle timing or connection errors
-  }
-};
+import { toUserError } from './features/wallet';
+
+try {
+  await executeTransaction();
+} catch (error) {
+  const userError = toUserError(error, { abis: [myContractAbi] });
+  showErrorToast(userError.title, userError.message);
+}
 ```
 
-2. **Provide visual feedback during loading**:
-```tsx
-<button disabled={!connected || isWalletClientLoading}>
-  {isWalletClientLoading ? 'Loading Wallet...' : 'Authenticate'}
-</button>
-```
+## Supported Wallets
 
-3. **Handle auto-authentication timing**:
-```tsx
-useEffect(() => {
-  if (connected && token && !isWalletClientLoading) {
-    // Safe to auto-authenticate
-    handleAuth();
-  }
-}, [connected, token, isWalletClientLoading]);
-```
-
-## Security
-
-- **Message signing** : Cryptographic verification using Ethereum standards
-- **Timestamp nonce** : Protection against replay attacks
-- **Backend validation** : Server-side verification
-- **Error handling** : Secure error management with proper timing checks
-- **Network validation** : Ensures connection to correct Base network
-- **Client state validation** : Prevents authentication attempts with invalid wallet client state
-
-## Supported wallets
-
-- **MetaMask** : Most popular Ethereum wallet
-- **WalletConnect** : Protocol for connecting mobile wallets
-- **Coinbase Wallet** : Native Base support
-- **Rainbow** : Popular mobile wallet
-- **Trust Wallet** : Multi-chain support
+Via RainbowKit:
+- MetaMask
+- WalletConnect
+- Coinbase Wallet
+- Rainbow
+- Trust Wallet
+- And many more...
 
 ## Environment Variables
 
-Create a `.env` file in your project root:
-
 ```env
 VITE_API_URL=http://localhost:8001
-VITE_WALLETCONNECT_PROJECT_ID=your-project-id-from-walletconnect-cloud
+VITE_WALLETCONNECT_PROJECT_ID=your-project-id
 ```
 
-- `VITE_API_URL`: Backend URL
-- `VITE_AUTH_ENDPOINT`: Backend API URL for authentication communication
-- `VITE_WALLETCONNECT_PROJECT_ID`: Get this from [WalletConnect Cloud](https://cloud.walletconnect.com)
+Get your WalletConnect Project ID from [WalletConnect Cloud](https://cloud.walletconnect.com).
 
-## Benefits
+## Migration from Previous Implementation
 
-1. **Isolation** : All wallet logic grouped together
-2. **Reusability** : Centralized imports via index.ts
-3. **Maintainability** : Clear and documented structure
-4. **Scalability** : Easy to add new wallets and chains
-5. **Testability** : Isolated and testable components
-6. **Smart UX** : Dynamic interface based on wallet and network state
-7. **Environment flexibility** : Configurable backend URL and WalletConnect project
-8. **Base optimized** : Native support for Base blockchain features
-9. **Robust timing** : Proper handling of wallet client loading states
-10. **Error resilience** : Graceful handling of connection timing issues
+If upgrading from the old implementation:
+
+1. Remove any `ConnectorCompatibilityGuard` imports
+2. Replace multiple state checks with `useWalletReady`
+3. Remove custom `isReconnecting` timeout handling
+4. Use `isReady` from `useWalletReady` instead of manual checks
+
+```tsx
+// BEFORE
+const { isConnected, isReconnecting, status } = useAccount();
+const { data: walletClient, isLoading } = useWalletClient();
+const ready = isConnected && !!walletClient && status === 'connected' && !isReconnecting && !isLoading;
+
+// AFTER
+const { isReady } = useWalletReady();
+```
 
 ## Resources
 
@@ -240,4 +256,3 @@ VITE_WALLETCONNECT_PROJECT_ID=your-project-id-from-walletconnect-cloud
 - [RainbowKit Documentation](https://www.rainbowkit.com/)
 - [Viem Documentation](https://viem.sh/)
 - [Base Documentation](https://docs.base.org/)
-- [WalletConnect Cloud](https://cloud.walletconnect.com/) 

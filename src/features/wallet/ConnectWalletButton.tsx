@@ -1,10 +1,16 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useAccount } from 'wagmi';
+import { useAccount, useConnect, type Connector } from 'wagmi';
 
+/**
+ * Custom wallet connect button using RainbowKit's render props.
+ * 
+ * Follows RainbowKit best practices:
+ * - Properly checks `mounted` and `authenticationStatus` for readiness
+ * - Checks provider availability before enabling buttons
+ * - Handles all connection states cleanly
+ */
 export default function ConnectWalletButton() {
-    const { isConnected, isConnecting, isReconnecting } = useAccount();
-    
     return (
         <ConnectButton.Custom>
             {({
@@ -16,9 +22,15 @@ export default function ConnectWalletButton() {
                 authenticationStatus,
                 mounted,
             }) => {
+                // Check if component is ready for interaction
                 const ready = mounted && authenticationStatus !== 'loading';
-                
-                const connected = isConnected && ready && account && chain;
+
+                // Full connection check including auth status
+                const connected =
+                    ready &&
+                    account &&
+                    chain &&
+                    (!authenticationStatus || authenticationStatus === 'authenticated');
 
                 return (
                     <div
@@ -32,33 +44,16 @@ export default function ConnectWalletButton() {
                         })}
                     >
                         {(() => {
-                            if (isConnecting || isReconnecting) {
-                                return (
-                                    <button
-                                        disabled
-                                        type="button"
-                                        className="bg-[#8B5CF6]/70 text-white rounded-full px-6 py-2 font-medium cursor-not-allowed"
-                                    >
-                                        {isReconnecting ? 'Reconnecting...' : 'Connecting...'}
-                                    </button>
-                                );
-                            }
-
+                            // Not connected - show connect button
                             if (!connected) {
                                 return (
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={openConnectModal}
-                                            type="button"
-                                            className="bg-[#8B5CF6] text-white rounded-full px-6 py-2 font-medium hover:bg-[#7C3AED] transition-all duration-200"
-                                            aria-label="Connect wallet"
-                                        >
-                                            Connect Wallet
-                                        </button>
-                                    </div>
+                                    <ConnectButtonWithProviderCheck
+                                        onClick={openConnectModal}
+                                    />
                                 );
                             }
 
+                            // Wrong network
                             if (chain?.unsupported) {
                                 return (
                                     <button
@@ -71,30 +66,30 @@ export default function ConnectWalletButton() {
                                 );
                             }
 
+                            // Connected - show chain and account
                             return (
-                                <div style={{ display: 'flex', gap: 12 }}>
+                                <div className="flex items-center gap-3">
                                     <button
                                         onClick={openChainModal}
-                                        style={{ display: 'flex', alignItems: 'center' }}
                                         type="button"
-                                        className="bg-[#8B5CF6] text-white rounded-full px-4 py-2 font-medium hover:bg-[#7C3AED] transition-all duration-200"
+                                        className="flex items-center bg-[#8B5CF6] text-white rounded-full px-4 py-2 font-medium hover:bg-[#7C3AED] transition-all duration-200"
                                     >
                                         {chain?.hasIcon && (
                                             <div
+                                                className="mr-2"
                                                 style={{
                                                     background: chain.iconBackground,
-                                                    width: 12,
-                                                    height: 12,
+                                                    width: 16,
+                                                    height: 16,
                                                     borderRadius: 999,
                                                     overflow: 'hidden',
-                                                    marginRight: 4,
                                                 }}
                                             >
                                                 {chain?.iconUrl && (
                                                     <img
                                                         alt={chain.name ?? 'Chain icon'}
                                                         src={chain.iconUrl}
-                                                        style={{ width: 12, height: 12 }}
+                                                        style={{ width: 16, height: 16 }}
                                                     />
                                                 )}
                                             </div>
@@ -117,5 +112,86 @@ export default function ConnectWalletButton() {
                 );
             }}
         </ConnectButton.Custom>
+    );
+}
+
+/**
+ * Connect button that checks provider availability.
+ * 
+ * This follows RainbowKit's recommended pattern for checking
+ * if a wallet provider is actually available before enabling the button.
+ */
+function ConnectButtonWithProviderCheck({ onClick }: { onClick: () => void }) {
+    const { connectors } = useConnect();
+    const { isConnecting, isReconnecting } = useAccount();
+    const [hasAvailableProvider, setHasAvailableProvider] = useState(false);
+    const [isCheckingProviders, setIsCheckingProviders] = useState(true);
+
+    // Check if any connector has an available provider
+    useEffect(() => {
+        let cancelled = false;
+
+        const checkProviders = async () => {
+            setIsCheckingProviders(true);
+
+            try {
+                // Check each connector for provider availability
+                const providerChecks = connectors.map(async (connector: Connector) => {
+                    try {
+                        const provider = await connector.getProvider();
+                        return !!provider;
+                    } catch {
+                        return false;
+                    }
+                });
+
+                const results = await Promise.all(providerChecks);
+
+                if (!cancelled) {
+                    setHasAvailableProvider(results.some(Boolean));
+                    setIsCheckingProviders(false);
+                }
+            } catch {
+                if (!cancelled) {
+                    // Default to allowing connection even if check fails
+                    setHasAvailableProvider(true);
+                    setIsCheckingProviders(false);
+                }
+            }
+        };
+
+        checkProviders();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [connectors]);
+
+    const isLoading = isConnecting || isReconnecting || isCheckingProviders;
+
+    const getButtonText = () => {
+        if (isReconnecting) return 'Reconnecting...';
+        if (isConnecting) return 'Connecting...';
+        if (isCheckingProviders) return 'Loading...';
+        return 'Connect Wallet';
+    };
+
+    return (
+        <button
+            onClick={onClick}
+            disabled={isLoading && !hasAvailableProvider}
+            type="button"
+            className={`
+                bg-[#8B5CF6] text-white rounded-full px-6 py-2 font-medium
+                transition-all duration-200
+                ${isLoading
+                    ? 'opacity-70 cursor-not-allowed'
+                    : 'hover:bg-[#7C3AED]'
+                }
+            `}
+            aria-label="Connect wallet"
+        >
+            {getButtonText()}
+        </button>
     );
 }
