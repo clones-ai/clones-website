@@ -22,9 +22,14 @@ describe('TransactionBusinessLogic', () => {
             expect(TransactionBusinessLogic.requiresApprovalCheck('withdrawPool')).toBe(false);
         });
 
+        test('should return true for createDataset transactions', () => {
+            expect(TransactionBusinessLogic.requiresApprovalCheck('createDataset')).toBe(true);
+        });
+
         test('should return false for unknown transaction types', () => {
             expect(TransactionBusinessLogic.requiresApprovalCheck('unknownType')).toBe(false);
         });
+
 
         test('should handle empty string', () => {
             expect(TransactionBusinessLogic.requiresApprovalCheck('')).toBe(false);
@@ -76,7 +81,7 @@ describe('TransactionBusinessLogic', () => {
     });
 
     describe('isTransactionTypeValid', () => {
-        const validTypes = ['createFactory', 'fundPool', 'claimRewards', 'createAndFundPool', 'withdrawPool'];
+        const validTypes = ['createFactory', 'fundPool', 'claimRewards', 'createAndFundPool', 'withdrawPool', 'createDataset'];
 
         test.each(validTypes)('should return true for valid transaction type: %s', (type) => {
             expect(TransactionBusinessLogic.isTransactionTypeValid(type)).toBe(true);

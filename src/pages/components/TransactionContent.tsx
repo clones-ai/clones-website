@@ -5,7 +5,7 @@ import { RevealUp } from '../../components/motion/Reveal';
 
 interface TransactionSession {
   sessionId: string;
-  transactionType: 'createFactory' | 'fundPool' | 'claimRewards' | 'createAndFundPool' | 'withdrawPool';
+  transactionType: 'createFactory' | 'fundPool' | 'claimRewards' | 'createAndFundPool' | 'withdrawPool' | 'createDataset';
   transactionParams: {
     type: string;
     creator?: string;
@@ -13,6 +13,12 @@ interface TransactionSession {
     tokenAddress?: string;
     amount?: string;
     poolAddress?: string;
+    chainId?: number;
+    submissionId?: string;
+    datasetId?: string;
+    name?: string;
+    symbol?: string;
+    burnThresholdPercentage?: number;
   };
   sessionToken: string;
   expiresAt: string;
