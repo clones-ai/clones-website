@@ -17,6 +17,7 @@
  *  - claimRewards: Claims rewards from a reward pool contract.
  *  - createAndFundPool: Creates a new reward pool factory contract and funds it.
  *  - withdrawPool: Withdraws funds from a reward pool contract.
+ *  - createDataset: Creates a new dataset factory contract.
  * 
  * ---
  *
@@ -105,6 +106,7 @@ import { toUserError, type UserFacingError } from '../features/wallet/evmErrorDe
 import RewardPoolFactoryAbi from '../contracts/abis/RewardPoolFactory.json';
 import RewardPoolImplementationAbi from '../contracts/abis/RewardPoolImplementation.json';
 import ClaimRouterAbi from '../contracts/abis/ClaimRouter.json';
+import DatasetFactoryAbi from '../contracts/abis/DatasetFactory.json';
 import { GasEstimationService, type GasEstimate } from '../services/gasEstimationService';
 
 const erc20Abi = [
@@ -126,7 +128,7 @@ const AddressSchema = z.string().refine((addr) => isAddress(addr), 'Invalid Ethe
 
 const AmountStringSchema = z.string().regex(/^\d+(\.\d+)?$/, 'Invalid decimal amount');
 
-const TransactionTypeSchema = z.enum(['createFactory', 'fundPool', 'claimRewards', 'createAndFundPool', 'withdrawPool']);
+const TransactionTypeSchema = z.enum(['createFactory', 'fundPool', 'claimRewards', 'createAndFundPool', 'withdrawPool', 'createDataset']);
 
 const TransactionParamsSchema = z.object({
     type: z.string(),
@@ -181,6 +183,7 @@ const TX_WHITELIST: Record<TransactionSession['transactionType'], { fn: string[]
     claimRewards: { fn: ['payWithSig', 'payWithSigAndReferrals'], abi: RewardPoolImplementationAbi as Abi },
     createAndFundPool: { fn: ['createAndFundPool'], abi: RewardPoolFactoryAbi as Abi },
     withdrawPool: { fn: ['withdraw'], abi: RewardPoolImplementationAbi as Abi },
+    createDataset: { fn: ['createDataset'], abi: DatasetFactoryAbi as Abi },
 };
 
 function assertPreparedMatchesType(session: TransactionSession, preparedTx: PreparedTransaction): void {
@@ -311,7 +314,7 @@ const validatePreparedTransaction = (data: unknown): PreparedTransaction => {
 // Define interfaces right in the hook file for encapsulation
 export interface TransactionSession {
     sessionId: string;
-    transactionType: 'createFactory' | 'fundPool' | 'claimRewards' | 'createAndFundPool' | 'withdrawPool';
+    transactionType: 'createFactory' | 'fundPool' | 'claimRewards' | 'createAndFundPool' | 'withdrawPool' | 'createDataset';
     transactionParams: {
         type: string;
         creator?: string;
@@ -321,6 +324,10 @@ export interface TransactionSession {
         poolAddress?: string;
         chainId?: number;
         submissionId?: string;
+        datasetId?: string;
+        name?: string;
+        symbol?: string;
+        burnThresholdPercentage?: number;
     };
     sessionToken: string;
     expiresAt: string;
@@ -422,7 +429,7 @@ const normalizeValue = (v?: string | bigint) => (typeof v === 'bigint' ? v : v ?
 // Business Logic Helpers
 export const TransactionBusinessLogic = {
     requiresApprovalCheck(transactionType: string): boolean {
-        return transactionType === 'fundPool' || transactionType === 'createAndFundPool';
+        return transactionType === 'fundPool' || transactionType === 'createAndFundPool' || transactionType === 'createDataset';
     },
 
     calculateNeedsApproval(currentAllowance: bigint, requiredAmount: bigint): boolean {
@@ -433,7 +440,7 @@ export const TransactionBusinessLogic = {
     },
 
     isTransactionTypeValid(type: string): type is TransactionSession['transactionType'] {
-        return ['createFactory', 'fundPool', 'claimRewards', 'createAndFundPool', 'withdrawPool'].includes(type);
+        return ['createFactory', 'fundPool', 'claimRewards', 'createAndFundPool', 'withdrawPool', 'createDataset'].includes(type);
     },
 
     shouldAutoAuthenticate(sessionId: string | null, isAuthenticated: boolean): boolean {
@@ -1031,7 +1038,7 @@ const sideEffectHandlers: Record<TransactionState, SideEffectHandler> = {
     'RESET': () => null // Reset is handled by the reducer directly
 };
 
-const ALL_ABIS = [RewardPoolFactoryAbi, RewardPoolImplementationAbi, ClaimRouterAbi] as Abi[];
+const ALL_ABIS = [RewardPoolFactoryAbi, RewardPoolImplementationAbi, ClaimRouterAbi, DatasetFactoryAbi] as Abi[];
 
 export const useTransactionProcessor = () => {
     const [searchParams] = useSearchParams();
@@ -1083,7 +1090,7 @@ export const useTransactionProcessor = () => {
         args: address && spender ? [address, spender] : undefined,
         query: {
             enabled: !!(state.currentState === 'CHECKING_ALLOWANCE' &&
-                (state.sessionData?.transactionType === 'fundPool' || state.sessionData?.transactionType === 'createAndFundPool') &&
+                (state.sessionData?.transactionType === 'fundPool' || state.sessionData?.transactionType === 'createAndFundPool' || state.sessionData?.transactionType === 'createDataset') &&
                 address && spender && state.sessionData.transactionParams.tokenAddress),
         },
     });
@@ -1386,12 +1393,12 @@ export const useTransactionProcessor = () => {
         // Use wagmi writeContract - errors are handled by the writeError effect
         writeContract({
             address: tokenAddress,
-            abi: [{ 
-                name: 'approve', 
-                type: 'function', 
-                stateMutability: 'nonpayable', 
+            abi: [{
+                name: 'approve',
+                type: 'function',
+                stateMutability: 'nonpayable',
                 inputs: [
-                    { name: 'spender', type: 'address' }, 
+                    { name: 'spender', type: 'address' },
                     { name: 'amount', type: 'uint256' }
                 ],
                 outputs: [{ type: 'bool' }]

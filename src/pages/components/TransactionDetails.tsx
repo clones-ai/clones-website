@@ -1,6 +1,6 @@
 interface TransactionSession {
   sessionId: string;
-  transactionType: 'createFactory' | 'fundPool' | 'claimRewards' | 'createAndFundPool' | 'withdrawPool';
+  transactionType: 'createFactory' | 'fundPool' | 'claimRewards' | 'createAndFundPool' | 'withdrawPool' | 'createDataset';
   transactionParams: {
     type: string;
     creator?: string;
@@ -8,6 +8,12 @@ interface TransactionSession {
     tokenAddress?: string;
     amount?: string;
     poolAddress?: string;
+    chainId?: number;
+    submissionId?: string;
+    datasetId?: string;
+    name?: string;
+    symbol?: string;
+    burnThresholdPercentage?: number;
   };
   sessionToken: string;
   expiresAt: string;
@@ -31,7 +37,7 @@ export function TransactionDetails({ sessionData, address }: TransactionDetailsP
             {sessionData.transactionType.replace(/([A-Z])/g, ' $1').toLowerCase()}
           </p>
         </div>
-        
+
         {sessionData.transactionParams.token && (
           <div className="p-4 ultra-premium-glass-card rounded-lg">
             <p className="text-sm text-text-secondary mb-2 font-system">Token</p>
@@ -40,7 +46,7 @@ export function TransactionDetails({ sessionData, address }: TransactionDetailsP
             </p>
           </div>
         )}
-        
+
         {sessionData.transactionParams.amount && (
           <div className="p-4 ultra-premium-glass-card rounded-lg">
             <p className="text-sm text-text-secondary mb-2 font-system">Amount</p>
@@ -49,7 +55,7 @@ export function TransactionDetails({ sessionData, address }: TransactionDetailsP
             </p>
           </div>
         )}
-        
+
         <div className="p-4 ultra-premium-glass-card rounded-lg">
           <p className="text-sm text-text-secondary mb-2 font-system">Your Address</p>
           <p className="text-text-primary font-mono text-sm">

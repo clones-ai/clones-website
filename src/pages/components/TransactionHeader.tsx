@@ -2,7 +2,7 @@ import { Wallet } from 'lucide-react';
 import { RevealUp } from '../../components/motion/Reveal';
 
 interface TransactionHeaderProps {
-  transactionType?: 'createFactory' | 'fundPool' | 'claimRewards' | 'createAndFundPool' | 'withdrawPool';
+  transactionType?: 'createFactory' | 'fundPool' | 'claimRewards' | 'createAndFundPool' | 'withdrawPool' | 'createDataset';
   token?: string;
   amount?: string;
   poolAddress?: string;
@@ -21,6 +21,8 @@ export function TransactionHeader({ transactionType, token, amount, poolAddress 
         return 'Withdraw from Factory';
       case 'claimRewards':
         return 'Claim Rewards';
+      case 'createDataset':
+        return 'Create Dataset';
       default:
         return 'Execute Transaction';
     }
@@ -38,6 +40,8 @@ export function TransactionHeader({ transactionType, token, amount, poolAddress 
         return `Withdraw ${amount || ''} ${token || ''} from factory`;
       case 'claimRewards':
         return `Claim pending rewards from pool ${poolAddress?.slice(0, 6)}...${poolAddress?.slice(-4)}`;
+      case 'createDataset':
+        return `Create a new dataset for ${token || 'token'}`;
       default:
         return 'Execute blockchain transaction';
     }
